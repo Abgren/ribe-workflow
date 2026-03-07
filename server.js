@@ -49,7 +49,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ── Statiska filer (frontend) ─────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // ── API-routes ────────────────────────────────────────────────────────────────
 app.use('/api/orders', ordersRouter);
@@ -76,7 +76,7 @@ app.get('/api/config', (req, res) => {
 
 // ── SPA fallback: skicka alltid index.html för okända routes ─────────────────
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ── Fortnox auto-synk var 10:e minut (om konfigurerat) ───────────────────────
