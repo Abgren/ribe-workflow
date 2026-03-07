@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { arJobs, somJobs, bestJobs } = require('../db/database');
-const { requireAuth } = require('../middleware/auth');
+const { arJobs, somJobs, bestJobs } = require('./database');
+const { requireAuth } = require('./auth');
 
 // Välj rätt datamodell baserat på typ
 function getModel(type) {
