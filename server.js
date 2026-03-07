@@ -5,8 +5,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cron = require('node-cron');
 
-const ordersRouter = require('./routes/orders');
-const { router: fortnoxRouter, syncFromFortnox } = require('./routes/fortnox');
+const ordersRouter = require('./orders');
+const { router: fortnoxRouter, syncFromFortnox } = require('./fortnox');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
