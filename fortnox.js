@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
-const { arJobs, somJobs, bestJobs, settings, db } = require('../db/database');
-const { requireAuth } = require('../middleware/auth');
+const { arJobs, somJobs, bestJobs } = require('./database');
+const { requireAuth } = require('./auth');
 
 const FORTNOX_BASE = 'https://api.fortnox.se/3';
 
