@@ -1,276 +1,1916 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ribe Workflow</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', 'ribe-workflow.db');
-const db = new Database(DB_PATH);
+    <!-- Bootstrap 5.3.2 JS (krävs för modaler, dropdowns etc.) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-// Aktivera WAL för bättre prestanda med flera användare
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+    <!-- Bootstrap Icons 1.11.3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <!-- FullCalendar 6.1.10 (CSS ingår i JS-bunten) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    
+    <!-- MSAL Browser 3.7.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.7.1/dist/msal-browser.min.js"></script>
 
-// ── Skapa tabeller ────────────────────────────────────────────────────────────
+    <!-- jsPDF för PDF-generering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS ar_jobs (
-    id          TEXT PRIMARY KEY,
-    ordernr     TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'utkast',
-    kund        TEXT,
-    saljare     TEXT,
-    projekt     TEXT,
-    plats       TEXT,
-    montor      TEXT,
-    datum       TEXT,
-    tid         TEXT,
-    beskrivning TEXT,
-    kontaktperson TEXT,
-    kontakttelefon TEXT,
-    avvikelser  TEXT,
-    material    TEXT DEFAULT '[]',
-    lankad_somnadsorder TEXT DEFAULT '',
-    fortnox_order_id TEXT,
-    created_at  TEXT DEFAULT (datetime('now')),
-    updated_at  TEXT DEFAULT (datetime('now')),
-    created_by  TEXT
-  );
+    <!-- SheetJS för Excel-generering (Sömnadsorder) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --color-ar-primary: #1565C0;
+            --color-ar-dark: #0D47A1;
+            --color-som-primary: #00695C;
+            --color-som-light: #00897B;
+            --bg-light: #EEF2F7;
+            --status-utkast: #9E9E9E;
+            --status-ny-ar: #7B1FA2;
+            --status-preliminar: #7EC8E3;
+            --status-bokad: #1565C0;
+            --status-atergång: #E65100;
+            --status-klar: #2E7D32;
+            --status-ny-som: #00695C;
+            --status-sy: #00897B;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-light);
+            color: #333;
+        }
+        
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--color-ar-primary) 0%, var(--color-som-primary) 100%);
+        }
+        
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .login-card h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--color-ar-primary);
+        }
+        
+        .login-card p {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, var(--color-ar-primary) 0%, var(--color-ar-dark) 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(21, 101, 192, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        #mainApp {
+            display: none;
+        }
+        
+        .navbar-main {
+            background: linear-gradient(90deg, var(--color-ar-primary) 0%, #0D47A1 100%);
+            padding: 0.75rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        
+        .btn-light {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .nav-tabs {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 0;
+        }
+        
+        .nav-link {
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            cursor: pointer;
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-link:hover {
+            background-color: #eee;
+            color: var(--color-ar-primary);
+        }
+        
+        .nav-link.active {
+            border-bottom-color: var(--color-ar-primary);
+            color: var(--color-ar-primary);
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 180px);
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
+        }
+        
+        .calendar-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
+        }
+        
+        .search-box {
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: flex;
+        }
+        
+        .status-filter {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .status-btn {
+            padding: 0.35rem 0.75rem;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .status-btn.active {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            transform: scale(1.05);
+        }
+        
+        .status-btn.all {
+            background-color: #1565C0;
+            color: white;
+        }
+        
+        .status-btn.all.active {
+            background-color: #0D47A1;
+        }
+        
+        .kommande-list {
+            margin-top: 1rem;
+        }
+        
+        .kommande-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid var(--color-ar-primary);
+        }
+        
+        .kommande-item:hover {
+            background: #eef2f7;
+            transform: translateX(4px);
+        }
+        
+        .kommande-item-nr {
+            font-weight: 700;
+            color: var(--color-ar-primary);
+            font-size: 0.95rem;
+        }
+        
+        .kommande-item-info {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .status-pill {
+            display: inline-block;
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            background-color: #9E9E9E;
+        }
+        
+        .status-pill.utkast {
+            background-color: var(--status-utkast);
+            color: #333;
+        }
+        
+        .status-pill.ny-ar {
+            background-color: var(--status-ny-ar);
+        }
+        
+        .status-pill.ny-som {
+            background-color: var(--status-ny-som);
+        }
+        
+        .status-pill.preliminar {
+            background-color: var(--status-preliminar);
+            color: #333;
+        }
+        
+        .status-pill.bokad {
+            background-color: var(--status-bokad);
+        }
+        
+        .status-pill.atergång {
+            background-color: var(--status-atergång);
+        }
+        
+        .status-pill.klar {
+            background-color: var(--status-klar);
+        }
+        
+        .status-pill.sy {
+            background-color: var(--status-sy);
+        }
+        
+        .status-pill.active {
+            border-color: #333;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+        
+        .material-table {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .material-table th {
+            background-color: #f0f0f0;
+            font-weight: 600;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+        }
+        
+        .material-table td {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+        }
+        
+        .material-table input {
+            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .btn-sm-material {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .avvikelser-box {
+            border: 2px solid #ff6b6b;
+            padding: 1rem;
+            border-radius: 4px;
+            background-color: #fff5f5;
+        }
+        
+        .avvikelser-title {
+            font-weight: 600;
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary-ar {
+            background-color: var(--color-ar-primary);
+            color: white;
+        }
+        
+        .btn-primary-ar:hover {
+            background-color: var(--color-ar-dark);
+        }
+        
+        .tab-panel-som .btn-primary-ar {
+            background-color: var(--color-som-primary);
+        }
+        
+        .tab-panel-som .btn-primary-ar:hover {
+            background-color: var(--color-som-light);
+        }
+        
+        .btn-primary-som {
+            background-color: var(--color-som-primary);
+            color: white;
+        }
 
-  CREATE TABLE IF NOT EXISTS som_jobs (
-    id          TEXT PRIMARY KEY,
-    ordernr     TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'utkast',
-    kund        TEXT,
-    saljare     TEXT,
-    projekt     TEXT,
-    leveransdatum TEXT,
-    sommerskor  TEXT,
-    tyg         TEXT,
-    matt        TEXT,
-    beskrivning TEXT,
-    lankad_arbetsorder TEXT DEFAULT '',
-    fortnox_order_id TEXT,
-    created_at  TEXT DEFAULT (datetime('now')),
-    updated_at  TEXT DEFAULT (datetime('now')),
-    created_by  TEXT
-  );
+        .btn-primary-som:hover {
+            background-color: var(--color-som-light);
+        }
 
-  CREATE TABLE IF NOT EXISTS best_jobs (
-    id          TEXT PRIMARY KEY,
-    ordernr     TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'oppen',
-    datum       TEXT,
-    levdatum    TEXT,
-    leverantor  TEXT,
-    referens    TEXT,
-    projekt     TEXT,
-    betalning   TEXT DEFAULT '30 dagar netto',
-    levadress   TEXT DEFAULT 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö',
-    anteckningar TEXT,
-    mottagen    INTEGER DEFAULT 0,
-    artiklar    TEXT DEFAULT '[]',
-    fortnox_order_id TEXT,
-    created_at  TEXT DEFAULT (datetime('now')),
-    updated_at  TEXT DEFAULT (datetime('now')),
-    created_by  TEXT
-  );
+        .btn-outline-ar {
+            border: 2px solid var(--color-ar-primary);
+            color: var(--color-ar-primary);
+            background-color: white;
+        }
+        
+        .btn-outline-ar:hover {
+            background-color: var(--color-ar-primary);
+            color: white;
+        }
+        
+        .tab-panel-som .btn-outline-ar {
+            border-color: var(--color-som-primary);
+            color: var(--color-som-primary);
+        }
+        
+        .tab-panel-som .btn-outline-ar:hover {
+            background-color: var(--color-som-primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .linked-order {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--color-ar-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .tab-panel-som .linked-order {
+            border-left-color: var(--color-som-primary);
+        }
+        
+        .linked-order-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .linked-order-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-ar-primary);
+        }
+        
+        .tab-panel-som .linked-order-value {
+            color: var(--color-som-primary);
+        }
+        
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-section-title {
+            font-weight: 600;
+            color: var(--color-ar-primary);
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+        
+        .tab-panel-som .form-section-title,
+        .tab-panel-som .form-section-title + .form-control {
+            color: var(--color-som-primary);
+        }
+        
+        .modal-content {
+            border-radius: 8px;
+        }
+        
+        .modal-header {
+            background: linear-gradient(90deg, var(--color-ar-primary) 0%, #0D47A1 100%);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 0.5rem;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid #2E7D32;
+        }
+        
+        .toast.error {
+            border-left-color: #d32f2f;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .fc {
+            font-family: inherit;
+        }
+        
+        .fc-button-primary {
+            background-color: var(--color-ar-primary) !important;
+            border-color: var(--color-ar-primary) !important;
+        }
+        
+        .fc-button-primary:not(:disabled):active,
+        .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--color-ar-dark) !important;
+            border-color: var(--color-ar-dark) !important;
+        }
+        
+        .tab-panel-som .fc-button-primary {
+            background-color: var(--color-som-primary) !important;
+            border-color: var(--color-som-primary) !important;
+        }
+        
+        .tab-panel-som .fc-button-primary:not(:disabled):active,
+        .tab-panel-som .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--color-som-light) !important;
+            border-color: var(--color-som-light) !important;
+        }
+        
+        .best-filter-btn {
+            padding: 0.5rem 1rem;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .best-filter-btn.active {
+            background-color: #6A1B9A;
+            color: white;
+            border-color: #6A1B9A;
+        }
+        
+        .best-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .best-table th {
+            background-color: #f0f0f0;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .best-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .best-table tr:hover {
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        .best-artikel-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .best-artikel-table th {
+            background-color: #f0f0f0;
+            padding: 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .best-artikel-table td {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+        }
+        
+        .best-artikel-table input {
+            width: 100%;
+            padding: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                padding: 0.5rem;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 200px;
+                margin-bottom: 0.5rem;
+            }
+            
+            .calendar-container {
+                flex: 1;
+            }
+            
+            .navbar-main {
+                padding-bottom: 0;
+            }
+            
+            .nav-tabs {
+                display: none;
+            }
+            
+            .modal {
+                margin-top: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
 
-  CREATE TABLE IF NOT EXISTS settings (
-    key   TEXT PRIMARY KEY,
-    value TEXT
-  );
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <h1>Ribe Workflow</h1>
+            <p>Logga in med ditt Microsoft-konto för att fortsätta</p>
+            <button class="login-btn" id="loginBtnMsal">
+                <i class="bi bi-microsoft"></i> Logga in med Microsoft
+            </button>
+            <p id="loginError" style="color: #d32f2f; margin-top: 1rem; display: none;"></p>
+        </div>
+    </div>
 
-  CREATE TABLE IF NOT EXISTS fortnox_sync (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    synced_at   TEXT DEFAULT (datetime('now')),
-    orders_found INTEGER DEFAULT 0,
-    status      TEXT
-  );
-`);
+    <!-- MAIN APP -->
+    <div id="mainApp">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-main">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="bi bi-calendar-check"></i> Ribe Workflow
+                </a>
+                
+                <div class="ms-auto d-flex gap-2">
+                    <button class="btn btn-light btn-sm" id="fortnoxSyncBtn" title="Synka Fortnox">
+                        <i class="bi bi-arrow-repeat"></i> Synka Fortnox
+                    </button>
+                    <button class="btn btn-light btn-sm" id="settingsBtn" title="Inställningar">
+                        <i class="bi bi-gear"></i> Inställningar
+                    </button>
+                    <button class="btn btn-light btn-sm" id="logoutBtn" title="Logga ut">
+                        <i class="bi bi-box-arrow-right"></i> Logga ut
+                    </button>
+                </div>
+            </div>
+        </nav>
 
-// ── Hjälpfunktioner ───────────────────────────────────────────────────────────
+        <!-- Tab Navigation -->
+        <div class="nav-tabs" role="tablist">
+            <button class="nav-link active" id="tab-ar" role="tab" data-tab="ar">
+                <i class="bi bi-briefcase"></i> Arbetsorder
+            </button>
+            <button class="nav-link" id="tab-som" role="tab" data-tab="som">
+                <i class="bi bi-needle"></i> Sömnadsorder
+            </button>
+            <button class="nav-link" id="tab-best" role="tab" data-tab="best">
+                <i class="bi bi-box-seam"></i> Beställningar
+            </button>
+        </div>
 
-function generateId(prefix) {
-  return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+        <!-- Main Content -->
+        <div class="main-container">
+            
+            <!-- ARBETSORDER TAB -->
+            <div class="tab-panel tab-panel-ar active">
+                <div class="sidebar">
+                    <button class="btn btn-custom btn-primary-ar w-100 mb-3" id="newArJobBtn">
+                        <i class="bi bi-plus-circle"></i> Ny Arbetsorder
+                    </button>
+                    
+                    <input type="text" class="form-control search-box" id="searchArInput" placeholder="Sök ordernr/projekt...">
+                    
+                    <div>
+                        <div class="status-filter" id="filterArStatus">
+                            <button class="status-btn all active" data-status="all">Alla</button>
+                            <button class="status-btn" data-status="utkast">Utkast</button>
+                            <button class="status-btn" data-status="ny">NY</button>
+                            <button class="status-btn" data-status="preliminar">Prel.</button>
+                            <button class="status-btn" data-status="bokad">Bokad</button>
+                            <button class="status-btn" data-status="atergång">Återgång</button>
+                            <button class="status-btn" data-status="klar">Klar</button>
+                        </div>
+                        
+                        <div class="kommande-list" id="kommande-ar"></div>
+                    </div>
+                </div>
+                
+                <div class="calendar-container">
+                    <div id="calendar-ar"></div>
+                </div>
+            </div>
+            
+            <!-- SÖMNADSORDER TAB -->
+            <div class="tab-panel tab-panel-som">
+                <div class="sidebar">
+                    <button class="btn btn-custom btn-primary-som w-100 mb-3" id="newSomJobBtn">
+                        <i class="bi bi-plus-circle"></i> Ny sömnadsorder
+                    </button>
+                    
+                    <input type="text" class="form-control search-box" id="searchSomInput" placeholder="Sök ordernr/projekt...">
+                    
+                    <div>
+                        <div class="status-filter" id="filterSomStatus">
+                            <button class="status-btn all active" data-status="all">Alla</button>
+                            <button class="status-btn" data-status="utkast">Utkast</button>
+                            <button class="status-btn" data-status="ny">NY</button>
+                            <button class="status-btn" data-status="sy">Sy</button>
+                            <button class="status-btn" data-status="klar">Klar</button>
+                        </div>
+                        
+                        <div class="kommande-list" id="kommande-som"></div>
+                    </div>
+                </div>
+                
+                <div class="calendar-container">
+                    <div id="calendar-som"></div>
+                </div>
+            </div>
+            
+            <!-- BESTÄLLNINGAR TAB -->
+            <div class="tab-panel tab-panel-best">
+                <div style="width: 100%; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0; color: #6A1B9A;">Beställningar</h4>
+                        <button class="btn btn-custom" id="newBestBtn" style="background: #6A1B9A; color: white;">
+                            <i class="bi bi-plus-circle"></i> Ny beställning
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                        <input type="text" class="form-control" id="bestSearchInput" placeholder="Sök ordernr..." style="max-width: 300px;">
+                        <button class="best-filter-btn active" data-best-filter="all">Alla</button>
+                        <button class="best-filter-btn" data-best-filter="oppen">Öppen</button>
+                        <button class="best-filter-btn" data-best-filter="dellevererad">Dellevererad</button>
+                        <button class="best-filter-btn" data-best-filter="levererad">Levererad</button>
+                        <button class="best-filter-btn" data-best-filter="avbruten">Avbruten</button>
+                    </div>
+                    
+                    <div id="bestTableContainer"></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- Modal for Beställning -->
+    <div class="modal fade" id="bestModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bestModalTitle">Ny beställning</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <!-- Ordernr & Datum -->
+                    <div class="form-section">
+                        <label class="form-label">Ordernr</label>
+                        <input type="text" class="form-control" id="bestOrdernr" readonly style="background: #f0f0f0;">
+                    </div>
 
-function generateOrderNr(type, existingCount) {
-  const year = new Date().getFullYear();
-  const prefix = { ar: 'AO', som: 'SO', best: 'BO' }[type] || 'XX';
-  return `${prefix}-${year}-${String(existingCount + 1).padStart(3, '0')}`;
-}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-section">
+                            <label class="form-label">Beställningsdatum</label>
+                            <input type="date" class="form-control" id="bestDatum">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Leveransdatum</label>
+                            <input type="date" class="form-control" id="bestLevdatum">
+                        </div>
+                    </div>
 
-// ── AR Jobs ───────────────────────────────────────────────────────────────────
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-section">
+                            <label class="form-label">Leverantör</label>
+                            <input type="text" class="form-control" id="bestLeverantor" placeholder="Företag">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Vår referens</label>
+                            <select class="form-control" id="bestReferens"></select>
+                        </div>
+                    </div>
 
-const arJobs = {
-  getAll: () => {
-    const rows = db.prepare('SELECT * FROM ar_jobs ORDER BY created_at DESC').all();
-    return rows.map(r => ({ ...r, material: JSON.parse(r.material || '[]') }));
-  },
-  getById: (id) => {
-    const r = db.prepare('SELECT * FROM ar_jobs WHERE id = ?').get(id);
-    return r ? { ...r, material: JSON.parse(r.material || '[]') } : null;
-  },
-  create: (data, userId) => {
-    const count = db.prepare('SELECT COUNT(*) as c FROM ar_jobs').get().c;
-    const job = {
-      id: generateId('ar'),
-      ordernr: data.ordernr || generateOrderNr('ar', count),
-      status: data.status || 'utkast',
-      kund: data.kund || '',
-      saljare: data.saljare || '',
-      projekt: data.projekt || '',
-      plats: data.plats || '',
-      montor: data.montor || '',
-      datum: data.datum || '',
-      tid: data.tid || '09:00',
-      beskrivning: data.beskrivning || '',
-      kontaktperson: data.kontaktperson || '',
-      kontakttelefon: data.kontakttelefon || '',
-      avvikelser: data.avvikelser || '',
-      material: JSON.stringify(data.material || []),
-      lankad_somnadsorder: data.lankad_somnadsorder || '',
-      fortnox_order_id: data.fortnox_order_id || null,
-      created_by: userId || null
-    };
-    db.prepare(`INSERT INTO ar_jobs
-      (id,ordernr,status,kund,saljare,projekt,plats,montor,datum,tid,
-       beskrivning,kontaktperson,kontakttelefon,avvikelser,material,
-       lankad_somnadsorder,fortnox_order_id,created_by)
-      VALUES
-      (@id,@ordernr,@status,@kund,@saljare,@projekt,@plats,@montor,@datum,@tid,
-       @beskrivning,@kontaktperson,@kontakttelefon,@avvikelser,@material,
-       @lankad_somnadsorder,@fortnox_order_id,@created_by)`).run(job);
-    return arJobs.getById(job.id);
-  },
-  update: (id, data) => {
-    db.prepare(`UPDATE ar_jobs SET
-      status=@status, kund=@kund, saljare=@saljare, projekt=@projekt,
-      plats=@plats, montor=@montor, datum=@datum, tid=@tid,
-      beskrivning=@beskrivning, kontaktperson=@kontaktperson,
-      kontakttelefon=@kontakttelefon, avvikelser=@avvikelser,
-      material=@material, lankad_somnadsorder=@lankad_somnadsorder,
-      updated_at=datetime('now')
-      WHERE id=@id`).run({
-        ...data,
-        material: JSON.stringify(data.material || []),
-        id
-      });
-    return arJobs.getById(id);
-  },
-  delete: (id) => db.prepare('DELETE FROM ar_jobs WHERE id = ?').run(id)
-};
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-section">
+                            <label class="form-label">Projekt/Märkning</label>
+                            <input type="text" class="form-control" id="bestProjekt" placeholder="Projekt">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Betalningsvillkor</label>
+                            <input type="text" class="form-control" id="bestBetalning" value="30 dagar netto">
+                        </div>
+                    </div>
 
-// ── SOM Jobs ──────────────────────────────────────────────────────────────────
+                    <div class="form-section">
+                        <label class="form-label">Leveransadress</label>
+                        <input type="text" class="form-control" id="bestLevAdress" value="Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö">
+                    </div>
 
-const somJobs = {
-  getAll: () => db.prepare('SELECT * FROM som_jobs ORDER BY created_at DESC').all(),
-  getById: (id) => db.prepare('SELECT * FROM som_jobs WHERE id = ?').get(id),
-  create: (data, userId) => {
-    const count = db.prepare('SELECT COUNT(*) as c FROM som_jobs').get().c;
-    const job = {
-      id: generateId('som'),
-      ordernr: data.ordernr || generateOrderNr('som', count),
-      status: data.status || 'utkast',
-      kund: data.kund || '',
-      saljare: data.saljare || '',
-      projekt: data.projekt || '',
-      leveransdatum: data.leveransdatum || '',
-      sommerskor: data.sommerskor || '',
-      tyg: data.tyg || '',
-      matt: data.matt || '',
-      beskrivning: data.beskrivning || '',
-      lankad_arbetsorder: data.lankad_arbetsorder || '',
-      fortnox_order_id: data.fortnox_order_id || null,
-      created_by: userId || null
-    };
-    db.prepare(`INSERT INTO som_jobs
-      (id,ordernr,status,kund,saljare,projekt,leveransdatum,sommerskor,
-       tyg,matt,beskrivning,lankad_arbetsorder,fortnox_order_id,created_by)
-      VALUES
-      (@id,@ordernr,@status,@kund,@saljare,@projekt,@leveransdatum,@sommerskor,
-       @tyg,@matt,@beskrivning,@lankad_arbetsorder,@fortnox_order_id,@created_by)`).run(job);
-    return somJobs.getById(job.id);
-  },
-  update: (id, data) => {
-    db.prepare(`UPDATE som_jobs SET
-      status=@status, kund=@kund, saljare=@saljare, projekt=@projekt,
-      leveransdatum=@leveransdatum, sommerskor=@sommerskor, tyg=@tyg,
-      matt=@matt, beskrivning=@beskrivning,
-      lankad_arbetsorder=@lankad_arbetsorder, updated_at=datetime('now')
-      WHERE id=@id`).run({ ...data, id });
-    return somJobs.getById(id);
-  },
-  delete: (id) => db.prepare('DELETE FROM som_jobs WHERE id = ?').run(id)
-};
+                    <!-- Artiklar -->
+                    <div class="form-section">
+                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Artiklar</h6>
+                        <table class="best-artikel-table">
+                            <thead>
+                                <tr>
+                                    <th>Artikelnr</th>
+                                    <th>Beskrivning</th>
+                                    <th>Märkning</th>
+                                    <th style="width:70px;">Antal</th>
+                                    <th style="width:70px;">Enhet</th>
+                                    <th style="width:40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bestArtiklarBody"></tbody>
+                        </table>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addBestArtikelBtn">
+                            <i class="bi bi-plus"></i> Lägg till artikel
+                        </button>
+                    </div>
 
-// ── BEST Jobs ─────────────────────────────────────────────────────────────────
+                    <!-- Anteckningar -->
+                    <div class="form-section">
+                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Anteckningar</h6>
+                        <textarea class="form-control" id="bestAnteckningar" rows="3" placeholder="Ev. noteringar..."></textarea>
+                    </div>
 
-const bestJobs = {
-  getAll: () => {
-    const rows = db.prepare('SELECT * FROM best_jobs ORDER BY created_at DESC').all();
-    return rows.map(r => ({ ...r, artiklar: JSON.parse(r.artiklar || '[]') }));
-  },
-  getById: (id) => {
-    const r = db.prepare('SELECT * FROM best_jobs WHERE id = ?').get(id);
-    return r ? { ...r, artiklar: JSON.parse(r.artiklar || '[]') } : null;
-  },
-  create: (data, userId) => {
-    const count = db.prepare('SELECT COUNT(*) as c FROM best_jobs').get().c;
-    const job = {
-      id: generateId('best'),
-      ordernr: data.ordernr || generateOrderNr('best', count),
-      status: data.status || 'oppen',
-      datum: data.datum || new Date().toISOString().split('T')[0],
-      levdatum: data.levdatum || '',
-      leverantor: data.leverantor || '',
-      referens: data.referens || '',
-      projekt: data.projekt || '',
-      betalning: data.betalning || '30 dagar netto',
-      levadress: data.levadress || 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö',
-      anteckningar: data.anteckningar || '',
-      mottagen: data.mottagen ? 1 : 0,
-      artiklar: JSON.stringify(data.artiklar || []),
-      fortnox_order_id: data.fortnox_order_id || null,
-      created_by: userId || null
-    };
-    db.prepare(`INSERT INTO best_jobs
-      (id,ordernr,status,datum,levdatum,leverantor,referens,projekt,
-       betalning,levadress,anteckningar,mottagen,artiklar,fortnox_order_id,created_by)
-      VALUES
-      (@id,@ordernr,@status,@datum,@levdatum,@leverantor,@referens,@projekt,
-       @betalning,@levadress,@anteckningar,@mottagen,@artiklar,@fortnox_order_id,@created_by)`).run(job);
-    return bestJobs.getById(job.id);
-  },
-  update: (id, data) => {
-    db.prepare(`UPDATE best_jobs SET
-      status=@status, datum=@datum, levdatum=@levdatum, leverantor=@leverantor,
-      referens=@referens, projekt=@projekt, betalning=@betalning,
-      levadress=@levadress, anteckningar=@anteckningar,
-      mottagen=@mottagen, artiklar=@artiklar, updated_at=datetime('now')
-      WHERE id=@id`).run({
-        ...data,
-        mottagen: data.mottagen ? 1 : 0,
-        artiklar: JSON.stringify(data.artiklar || []),
-        id
-      });
-    return bestJobs.getById(id);
-  },
-  delete: (id) => db.prepare('DELETE FROM best_jobs WHERE id = ?').run(id)
-};
+                    <!-- Status -->
+                    <div class="form-section">
+                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Status</h6>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="bestStatusPills">
+                            <button type="button" class="status-pill active" data-best-status="oppen"
+                                style="background:#F57C00;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Öppen</button>
+                            <button type="button" class="status-pill" data-best-status="dellevererad"
+                                style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Dellevererad</button>
+                            <button type="button" class="status-pill" data-best-status="levererad"
+                                style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Levererad</button>
+                            <button type="button" class="status-pill" data-best-status="avbruten"
+                                style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Avbruten</button>
+                        </div>
+                        <div class="mt-3 d-flex align-items-center gap-2">
+                            <input type="checkbox" id="bestMottagen" class="best-check">
+                            <label for="bestMottagen" style="font-weight:500;">Leverans mottagen</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                    <button type="button" class="btn btn-outline-secondary" id="bestDeleteBtn" style="display:none;">
+                        <i class="bi bi-trash"></i> Ta bort
+                    </button>
+                    <button type="button" class="btn" id="bestPdfBtn" style="background:#6A1B9A;color:white;display:none;">
+                        <i class="bi bi-file-earmark-pdf"></i> Skicka som PDF
+                    </button>
+                    <button type="button" class="btn" id="bestSaveBtn" style="background:#6A1B9A;color:white;">
+                        <i class="bi bi-check-circle"></i> Spara
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Job Details -->
+    <div class="modal fade" id="jobModal" tabindex="-1">
+        <div class="modal-dialog modal-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jobModalTitle">Ny Arbetsorder</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body" id="jobModalBody">
+                    <!-- Content will be generated by JavaScript -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                    <button type="button" class="btn btn-custom btn-primary-ar" id="downloadJobBtn" style="display: none;">
+                        <i class="bi bi-file-earmark-arrow-down"></i> <span id="downloadJobBtnLabel">Ladda ned PDF</span>
+                    </button>
+                    <button type="button" class="btn btn-custom btn-primary-ar" id="saveJobBtn">
+                        <i class="bi bi-check-circle"></i> Spara
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Inställningar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-section">
+                        <h6 class="form-section-title">Microsoft 365 / Outlook</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tenant ID</label>
+                            <input type="text" class="form-control" id="settingsTenantId" readonly style="background: #f0f0f0;">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Client ID</label>
+                            <input type="text" class="form-control" id="settingsClientId" readonly style="background: #f0f0f0;">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Redirect URI</label>
+                            <input type="text" class="form-control" id="settingsRedirectUri" readonly style="background: #f0f0f0;">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Företagsnamn</label>
+                            <input type="text" class="form-control" id="settingsCompanyName" placeholder="Ribe">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Spara inställningar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
-// ── Settings ──────────────────────────────────────────────────────────────────
+    <script>
+        // ============================================================================
+        // MSAL CONFIGURATION & STATE
+        // ============================================================================
+        
+        let msalInstance = null;
+        let accessToken = null;
+        let currentUser = null;
+        let currentTab = 'ar';
+        let currentEditingJobId = null;
+        let currentEditingType = null;
+        let currentEditingBestId = null;
+        let currentBestFilter = 'all';
+        let arCalendar = null;
+        let somCalendar = null;
+        let msSalesNames = ['Danne', 'Tessan', 'Tina', 'Anders'];
+        let msMontörNames = ['Ali', 'Hampus', 'Mukta', 'David'];
+        let msSewersNames = [];
+        
+        // ============================================================================
+        // UTILITY FUNCTIONS
+        // ============================================================================
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<strong>${type === 'success' ? 'OK!' : 'Fel!'}</strong> ${message}`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            return d.toISOString().split('T')[0];
+        }
+        
+        function generateOrderNumber(type) {
+            const year = new Date().getFullYear();
+            const timestamp = Date.now().toString(36);
+            const prefix = type === 'ar' ? 'AO' : 'SO';
+            return `${prefix}-${year}-${timestamp}`;
+        }
+        
+        function generateBestOrdernr() {
+            const year = new Date().getFullYear();
+            const timestamp = Date.now().toString(36);
+            return `BEST-${year}-${timestamp}`;
+        }
+        
+        // ============================================================================
+        // API FUNCTIONS
+        // ============================================================================
+        
+        async function apiCall(method, endpoint, body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`/api${endpoint}`, options);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        handleLogout();
+                        return null;
+                    }
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API Call Error:', error);
+                showToast(`Fel: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function loadOrders(type) {
+            const endpoint = `/orders/${type}`;
+            return await apiCall('GET', endpoint) || [];
+        }
+        
+        async function saveOrder(type, order) {
+            const isNew = !order.id;
+            const endpoint = isNew ? `/orders/${type}` : `/orders/${type}/${order.id}`;
+            const method = isNew ? 'POST' : 'PUT';
+            return await apiCall(method, endpoint, order);
+        }
+        
+        async function deleteOrder(type, id) {
+            const endpoint = `/orders/${type}/${id}`;
+            return await apiCall('DELETE', endpoint);
+        }
+        
+        async function syncFortnox() {
+            try {
+                const response = await apiCall('POST', '/fortnox/sync');
+                if (response) {
+                    showToast('Fortnox synkronisering påbörjad');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Fortnox sync error:', error);
+            }
+            return false;
+        }
+        
+        // ============================================================================
+        // MSAL INITIALIZATION
+        // ============================================================================
+        
+        async function initMsal() {
+            try {
+                // Fetch config from backend
+                const configResponse = await fetch('/api/config');
+                const config = await configResponse.json();
+                
+                const msalConfig = {
+                    auth: {
+                        clientId: config.clientId,
+                        authority: `https://login.microsoftonline.com/${config.tenantId}`,
+                        redirectUri: window.location.origin + '/'
+                    },
+                    cache: {
+                        cacheLocation: 'localStorage',
+                        storeAuthStateInCookie: false
+                    }
+                };
+                
+                msalInstance = new msal.PublicClientApplication(msalConfig);
+                await msalInstance.initialize();
+                
+                // Check if user is already logged in
+                const accounts = msalInstance.getAllAccounts();
+                if (accounts.length > 0) {
+                    currentUser = accounts[0];
+                    await acquireToken();
+                    showMainApp();
+                    await initializeApp();
+                } else {
+                    showLoginScreen();
+                }
+            } catch (error) {
+                console.error('MSAL initialization error:', error);
+                showToast('Initialisering av login misslyckades', 'error');
+            }
+        }
+        
+        async function acquireToken() {
+            try {
+                const request = {
+                    scopes: ['https://graph.microsoft.com/.default'],
+                    account: currentUser
+                };
+                
+                const response = await msalInstance.acquireTokenSilent(request);
+                accessToken = response.accessToken;
+                return accessToken;
+            } catch (error) {
+                console.error('Token acquisition error:', error);
+                showToast('Kunde inte hämta åtkomsttoken', 'error');
+                return null;
+            }
+        }
+        
+        async function handleLogin() {
+            try {
+                const response = await msalInstance.loginPopup({
+                    scopes: ['https://graph.microsoft.com/.default']
+                });
+                
+                currentUser = response.account;
+                msalInstance.setActiveAccount(currentUser);
+                accessToken = response.accessToken;
+                
+                showMainApp();
+                await initializeApp();
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('loginError').textContent = 'Inloggning misslyckades. Försök igen.';
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+        
+        function handleLogout() {
+            msalInstance.logout();
+        }
+        
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+        
+        function showMainApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+        }
+        
+        // ============================================================================
+        // APPLICATION INITIALIZATION
+        // ============================================================================
+        
+        async function initializeApp() {
+            // Load settings
+            const settingsResp = await apiCall('GET', '/settings');
+            if (settingsResp) {
+                document.getElementById('settingsTenantId').value = settingsResp.tenantId || '';
+                document.getElementById('settingsClientId').value = settingsResp.clientId || '';
+                document.getElementById('settingsRedirectUri').value = settingsResp.redirectUri || '';
+                document.getElementById('settingsCompanyName').value = settingsResp.companyName || '';
+            }
+            
+            // Load initial data for AR tab
+            await loadAndRenderArJobs();
+            
+            // Setup event listeners
+            setupEventListeners();
+        }
+        
+        // ============================================================================
+        // TAB NAVIGATION
+        // ============================================================================
+        
+        async function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update navbar tabs
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('active');
+                if (el.dataset.tab === tab) {
+                    el.classList.add('active');
+                }
+            });
+            
+            // Update tab panels
+            document.querySelectorAll('.tab-panel').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector('.tab-panel-' + tab).classList.add('active');
+            
+            // Load and render appropriate data
+            if (tab === 'ar') {
+                if (!arCalendar) initArCalendar();
+                await loadAndRenderArJobs();
+                setTimeout(() => arCalendar && arCalendar.updateSize(), 150);
+            } else if (tab === 'som') {
+                if (!somCalendar) initSomCalendar();
+                await loadAndRenderSomJobs();
+                setTimeout(() => somCalendar && somCalendar.updateSize(), 150);
+            } else if (tab === 'best') {
+                await renderBestTable();
+            }
+        }
+        
+        // ============================================================================
+        // ARBETSORDER (AR) FUNCTIONS
+        // ============================================================================
+        
+        async function loadAndRenderArJobs() {
+            const jobs = await loadOrders('ar');
+            renderArList(jobs);
+            updateArCalendar(jobs);
+        }
+        
+        function renderArList(jobs) {
+            const container = document.getElementById('kommande-ar');
+            const searchText = document.getElementById('searchArInput').value.toLowerCase();
+            const statusFilter = document.querySelector('#filterArStatus .status-btn.active')?.dataset.status || 'all';
+            
+            let filtered = jobs;
+            
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(j => j.status === statusFilter);
+            }
+            
+            if (searchText) {
+                filtered = filtered.filter(j => 
+                    (j.ordernr || '').toLowerCase().includes(searchText) ||
+                    (j.projekt || '').toLowerCase().includes(searchText)
+                );
+            }
+            
+            container.innerHTML = filtered.map(job => `
+                <div class="kommande-item" onclick="editArJob('${job.id}')">
+                    <div class="kommande-item-nr">${job.ordernr}</div>
+                    <div class="kommande-item-info">${job.projekt}</div>
+                    <div class="kommande-item-info">
+                        <span class="status-pill ${job.status}">${job.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateArCalendar(jobs) {
+            if (!arCalendar) return;
+            
+            const events = jobs
+                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && job.datum)
+                .map(job => ({
+                    id: job.id,
+                    title: `${job.ordernr} - ${job.kund}`,
+                    start: job.datum,
+                    backgroundColor: getStatusColor(job.status, 'ar'),
+                    borderColor: getStatusColor(job.status, 'ar'),
+                    textColor: job.status === 'preliminar' ? '#333' : '#fff'
+                }));
+            
+            arCalendar.removeAllEvents();
+            arCalendar.addEventSource(events);
+        }
+        
+        function getStatusColor(status, type = 'ar') {
+            const colors = {
+                ar: {
+                    'utkast': '#9E9E9E',
+                    'ny': '#7B1FA2',
+                    'preliminar': '#7EC8E3',
+                    'bokad': '#1565C0',
+                    'atergång': '#E65100',
+                    'klar': '#2E7D32'
+                },
+                som: {
+                    'utkast': '#9E9E9E',
+                    'ny': '#00695C',
+                    'sy': '#00897B',
+                    'klar': '#2E7D32'
+                }
+            };
+            return colors[type]?.[status] || '#999';
+        }
+        
+        async function editArJob(jobId) {
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            
+            currentEditingJobId = jobId;
+            currentEditingType = 'ar';
+            
+            showArJobModal(job);
+        }
+        
+        function showArJobModal(job = null) {
+            const isNew = !job;
+            const jobData = job || {
+                ordernr: generateOrderNumber('ar'),
+                status: 'utkast',
+                datum: formatDate(new Date())
+            };
+            
+            document.getElementById('jobModalTitle').textContent = isNew ? 'Ny Arbetsorder' : `Arbetsorder ${jobData.ordernr}`;
+            
+            // Build form HTML
+            let formHtml = `
+                <div class="form-section">
+                    <label class="form-label">Ordernr</label>
+                    <input type="text" class="form-control ar-field" id="ar_ordernr" value="${jobData.ordernr || ''}" readonly style="background: #f0f0f0;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-section">
+                        <label class="form-label">Datum</label>
+                        <input type="date" class="form-control ar-field" id="ar_datum" value="${jobData.datum || ''}">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Kund</label>
+                        <input type="text" class="form-control ar-field" id="ar_kund" value="${jobData.kund || ''}" placeholder="Kundnamn">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label class="form-label">Projekt</label>
+                    <input type="text" class="form-control ar-field" id="ar_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn">
+                </div>
+                
+                <div class="form-section">
+                    <h6 class="form-section-title">Status</h6>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="status-pill ${jobData.status === 'utkast' ? 'active' : ''}" data-ar-status="utkast" style="background: ${jobData.status === 'utkast' ? 'var(--status-utkast)' : '#eee'}; color: ${jobData.status === 'utkast' ? 'white' : '#333'};">Utkast</button>
+                        <button type="button" class="status-pill ${jobData.status === 'ny' ? 'active' : ''}" data-ar-status="ny" style="background: ${jobData.status === 'ny' ? 'var(--status-ny-ar)' : '#eee'}; color: white;">NY</button>
+                        <button type="button" class="status-pill ${jobData.status === 'preliminar' ? 'active' : ''}" data-ar-status="preliminar" style="background: ${jobData.status === 'preliminar' ? 'var(--status-preliminar)' : '#eee'}; color: ${jobData.status === 'preliminar' ? '#333' : '#333'};">Prel.</button>
+                        <button type="button" class="status-pill ${jobData.status === 'bokad' ? 'active' : ''}" data-ar-status="bokad" style="background: ${jobData.status === 'bokad' ? 'var(--status-bokad)' : '#eee'}; color: white;">Bokad</button>
+                        <button type="button" class="status-pill ${jobData.status === 'atergång' ? 'active' : ''}" data-ar-status="atergång" style="background: ${jobData.status === 'atergång' ? 'var(--status-atergång)' : '#eee'}; color: white;">Återgång</button>
+                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-ar-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar)' : '#eee'}; color: white;">Klar</button>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label class="form-label">Anteckningar</label>
+                    <textarea class="form-control ar-field" id="ar_anteckningar" rows="3" placeholder="Noteringar...">${jobData.anteckningar || ''}</textarea>
+                </div>
+            `;
+            
+            document.getElementById('jobModalBody').innerHTML = formHtml;
+            
+            // Setup status pill listeners
+            document.querySelectorAll('[data-ar-status]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-ar-status]').forEach(b => {
+                        b.style.background = '#eee';
+                        b.style.color = '#333';
+                        b.classList.remove('active');
+                    });
+                    const status = e.target.dataset.arStatus;
+                    e.target.style.background = getStatusColor(status, 'ar');
+                    e.target.style.color = ['preliminar', 'utkast'].includes(status) ? '#333' : 'white';
+                    e.target.classList.add('active');
+                });
+            });
+            
+            document.getElementById('saveJobBtn').onclick = () => saveArJob(jobData);
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).show();
+        }
+        
+        async function saveArJob(originalJobData) {
+            const activeStatusBtn = document.querySelector('[data-ar-status].active');
+            const status = activeStatusBtn?.dataset.arStatus || 'utkast';
+            
+            const jobData = {
+                id: currentEditingJobId || ('ar_' + Date.now().toString(36) + Math.random().toString(36).slice(2)),
+                ordernr: document.getElementById('ar_ordernr').value,
+                datum: document.getElementById('ar_datum').value,
+                kund: document.getElementById('ar_kund').value,
+                projekt: document.getElementById('ar_projekt').value,
+                anteckningar: document.getElementById('ar_anteckningar').value,
+                status
+            };
+            
+            const result = await saveOrder('ar', jobData);
+            if (result) {
+                showToast('Arbetsorder sparad');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).hide();
+                await loadAndRenderArJobs();
+            }
+        }
+        
+        function initArCalendar() {
+            const calendarEl = document.getElementById('calendar-ar');
+            arCalendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                },
+                locale: 'sv',
+                events: [],
+                eventClick: async (info) => {
+                    const jobs = await loadOrders('ar');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (job) {
+                        currentEditingJobId = job.id;
+                        showArJobModal(job);
+                    }
+                },
+                eventDidMount: (info) => {
+                    info.el.style.cursor = 'pointer';
+                }
+            });
+            arCalendar.render();
+        }
+        
+        // ============================================================================
+        // SÖMNADSORDER (SOM) FUNCTIONS
+        // ============================================================================
+        
+        async function loadAndRenderSomJobs() {
+            const jobs = await loadOrders('som');
+            renderSomList(jobs);
+            updateSomCalendar(jobs);
+        }
+        
+        function renderSomList(jobs) {
+            const container = document.getElementById('kommande-som');
+            const searchText = document.getElementById('searchSomInput').value.toLowerCase();
+            const statusFilter = document.querySelector('#filterSomStatus .status-btn.active')?.dataset.status || 'all';
+            
+            let filtered = jobs;
+            
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(j => j.status === statusFilter);
+            }
+            
+            if (searchText) {
+                filtered = filtered.filter(j => 
+                    (j.ordernr || '').toLowerCase().includes(searchText) ||
+                    (j.projekt || '').toLowerCase().includes(searchText)
+                );
+            }
+            
+            container.innerHTML = filtered.map(job => `
+                <div class="kommande-item" onclick="editSomJob('${job.id}')" style="border-left-color: var(--color-som-primary);">
+                    <div class="kommande-item-nr" style="color: var(--color-som-primary);">${job.ordernr}</div>
+                    <div class="kommande-item-info">${job.projekt}</div>
+                    <div class="kommande-item-info">
+                        <span class="status-pill ${job.status}">${job.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateSomCalendar(jobs) {
+            if (!somCalendar) return;
+            
+            const events = jobs
+                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && job.leveransdatum)
+                .map(job => ({
+                    id: job.id,
+                    title: `${job.ordernr} - ${job.kund}`,
+                    start: job.leveransdatum,
+                    backgroundColor: getStatusColor(job.status, 'som'),
+                    borderColor: getStatusColor(job.status, 'som'),
+                    textColor: '#fff'
+                }));
+            
+            somCalendar.removeAllEvents();
+            somCalendar.addEventSource(events);
+        }
+        
+        async function editSomJob(jobId) {
+            const jobs = await loadOrders('som');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            
+            currentEditingJobId = jobId;
+            currentEditingType = 'som';
+            
+            showSomJobModal(job);
+        }
+        
+        function showSomJobModal(job = null) {
+            const isNew = !job;
+            const jobData = job || {
+                ordernr: generateOrderNumber('som'),
+                status: 'utkast',
+                leveransdatum: formatDate(new Date())
+            };
+            
+            document.getElementById('jobModalTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr}`;
+            
+            let formHtml = `
+                <div class="form-section">
+                    <label class="form-label">Ordernr</label>
+                    <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" readonly style="background: #f0f0f0;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-section">
+                        <label class="form-label">Leveransdatum</label>
+                        <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Kund</label>
+                        <input type="text" class="form-control som-field" id="som_kund" value="${jobData.kund || ''}" placeholder="Kundnamn">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label class="form-label">Projekt</label>
+                    <input type="text" class="form-control som-field" id="som_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn">
+                </div>
+                
+                <div class="form-section">
+                    <h6 class="form-section-title" style="color: var(--color-som-primary);">Status</h6>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="status-pill ${jobData.status === 'utkast' ? 'active' : ''}" data-som-status="utkast" style="background: ${jobData.status === 'utkast' ? 'var(--status-utkast)' : '#eee'}; color: ${jobData.status === 'utkast' ? 'white' : '#333'};">Utkast</button>
+                        <button type="button" class="status-pill ${jobData.status === 'ny' ? 'active' : ''}" data-som-status="ny" style="background: ${jobData.status === 'ny' ? 'var(--status-ny-som)' : '#eee'}; color: white;">NY</button>
+                        <button type="button" class="status-pill ${jobData.status === 'sy' ? 'active' : ''}" data-som-status="sy" style="background: ${jobData.status === 'sy' ? 'var(--status-sy)' : '#eee'}; color: white;">Sy</button>
+                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-som-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar)' : '#eee'}; color: white;">Klar</button>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label class="form-label">Anteckningar</label>
+                    <textarea class="form-control som-field" id="som_anteckningar" rows="3" placeholder="Noteringar...">${jobData.anteckningar || ''}</textarea>
+                </div>
+            `;
+            
+            document.getElementById('jobModalBody').innerHTML = formHtml;
+            
+            // Setup status pill listeners
+            document.querySelectorAll('[data-som-status]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-som-status]').forEach(b => {
+                        b.style.background = '#eee';
+                        b.style.color = '#333';
+                        b.classList.remove('active');
+                    });
+                    const status = e.target.dataset.somStatus;
+                    e.target.style.background = getStatusColor(status, 'som');
+                    e.target.style.color = status === 'utkast' ? '#333' : 'white';
+                    e.target.classList.add('active');
+                });
+            });
+            
+            document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).show();
+        }
+        
+        async function saveSomJob(originalJobData) {
+            const activeStatusBtn = document.querySelector('[data-som-status].active');
+            const status = activeStatusBtn?.dataset.somStatus || 'utkast';
+            
+            const jobData = {
+                id: currentEditingJobId || ('som_' + Date.now().toString(36) + Math.random().toString(36).slice(2)),
+                ordernr: document.getElementById('som_ordernr').value,
+                leveransdatum: document.getElementById('som_leveransdatum').value,
+                kund: document.getElementById('som_kund').value,
+                projekt: document.getElementById('som_projekt').value,
+                anteckningar: document.getElementById('som_anteckningar').value,
+                status
+            };
+            
+            const result = await saveOrder('som', jobData);
+            if (result) {
+                showToast('Sömnadsorder sparad');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).hide();
+                await loadAndRenderSomJobs();
+            }
+        }
+        
+        function initSomCalendar() {
+            const calendarEl = document.getElementById('calendar-som');
+            somCalendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                },
+                locale: 'sv',
+                events: [],
+                eventClick: async (info) => {
+                    const jobs = await loadOrders('som');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (job) {
+                        currentEditingJobId = job.id;
+                        showSomJobModal(job);
+                    }
+                },
+                eventDidMount: (info) => {
+                    info.el.style.cursor = 'pointer';
+                }
+            });
+            somCalendar.render();
+        }
+        
+        // ============================================================================
+        // BESTÄLLNINGAR (BEST) FUNCTIONS
+        // ============================================================================
+        
+        async function renderBestTable() {
+            const jobs = await loadOrders('best');
+            const container = document.getElementById('bestTableContainer');
+            const searchText = document.getElementById('bestSearchInput').value.toLowerCase();
+            
+            let filtered = jobs;
+            
+            if (currentBestFilter !== 'all') {
+                filtered = filtered.filter(j => j.status === currentBestFilter);
+            }
+            
+            if (searchText) {
+                filtered = filtered.filter(j => 
+                    (j.ordernr || '').toLowerCase().includes(searchText)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">Inga beställningar</p>';
+                return;
+            }
+            
+            const html = `
+                <table class="best-table">
+                    <thead>
+                        <tr>
+                            <th>Ordernr</th>
+                            <th>Leverantör</th>
+                            <th>Leveransdatum</th>
+                            <th>Status</th>
+                            <th>Mottagen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map(b => `
+                            <tr onclick="showBestModal('${b.id}')">
+                                <td><strong>${b.ordernr}</strong></td>
+                                <td>${b.leverantor || '-'}</td>
+                                <td>${b.levdatum || '-'}</td>
+                                <td><span class="status-pill" style="background: ${getPillColor(b.status)}; color: ${b.status === 'levererad' || b.status === 'oppen' ? 'white' : '#333'};">${b.status}</span></td>
+                                <td>${b.mottagen ? '<i class="bi bi-check2 text-success"></i>' : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function getPillColor(status) {
+            return { oppen: '#F57C00', dellevererad: '#1565C0', levererad: '#2E7D32', avbruten: '#9E9E9E' }[status] || '#9E9E9E';
+        }
+        
+        async function showBestModal(bestId = null) {
+            currentEditingBestId = bestId;
+            
+            let b = null;
+            if (bestId) {
+                const jobs = await loadOrders('best');
+                b = jobs.find(x => x.id === bestId);
+            }
+            
+            const refSel = document.getElementById('bestReferens');
+            refSel.innerHTML = '<option value="">-- Välj säljare --</option>' +
+                msSalesNames.map(n => `<option value="${n}" ${b && b.referens === n ? 'selected' : ''}>${n}</option>`).join('');
 
-const settings = {
-  get: (key) => {
-    const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
-    return row ? row.value : null;
-  },
-  set: (key, value) => {
-    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, String(value));
-  },
-  getAll: () => {
-    const rows = db.prepare('SELECT key, value FROM settings').all();
-    return Object.fromEntries(rows.map(r => [r.key, r.value]));
-  }
-};
+            document.getElementById('bestModalTitle').textContent = b ? `Beställning ${b.ordernr}` : 'Ny beställning';
+            document.getElementById('bestOrdernr').value   = b ? b.ordernr   : generateBestOrdernr();
+            document.getElementById('bestDatum').value     = b ? b.datum     : formatDate(new Date());
+            document.getElementById('bestLevdatum').value  = b ? b.levdatum  : '';
+            document.getElementById('bestLeverantor').value= b ? b.leverantor: '';
+            document.getElementById('bestProjekt').value   = b ? b.projekt   : '';
+            document.getElementById('bestBetalning').value = b ? b.betalning  : '30 dagar netto';
+            document.getElementById('bestLevAdress').value = b ? b.levadress  : 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö';
+            document.getElementById('bestAnteckningar').value = b ? b.anteckningar : '';
+            document.getElementById('bestMottagen').checked  = b ? !!b.mottagen : false;
 
-module.exports = { db, arJobs, somJobs, bestJobs, settings };
+            renderBestArtiklar(b ? b.artiklar : []);
+
+            const currentStatus = b ? b.status : 'oppen';
+            document.querySelectorAll('#bestStatusPills .status-pill').forEach(pill => {
+                const isActive = pill.dataset.bestStatus === currentStatus;
+                pill.style.background = isActive ? getPillColor(pill.dataset.bestStatus) : '#eee';
+                pill.style.color = isActive ? 'white' : '#333';
+            });
+
+            document.getElementById('bestDeleteBtn').style.display = b ? 'inline-block' : 'none';
+            document.getElementById('bestPdfBtn').style.display    = b ? 'inline-block' : 'none';
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).show();
+        }
+        
+        function renderBestArtiklar(artiklar) {
+            const tbody = document.getElementById('bestArtiklarBody');
+            const rows = (artiklar && artiklar.length > 0 ? artiklar : [{ artikelnr: '', beskrivning: '', markning: '', antal: '', enhet: 'm' }]);
+            tbody.innerHTML = rows.map((a, i) => `
+                <tr>
+                    <td><input type="text" value="${a.artikelnr || ''}" placeholder="Artikelnr" data-best-field="artikelnr" data-idx="${i}"></td>
+                    <td><input type="text" value="${a.beskrivning || ''}" placeholder="Beskrivning" data-best-field="beskrivning" data-idx="${i}"></td>
+                    <td><input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}"></td>
+                    <td><input type="number" value="${a.antal || ''}" placeholder="0" data-best-field="antal" data-idx="${i}"></td>
+                    <td><input type="text" value="${a.enhet || 'm'}" placeholder="enhet" data-best-field="enhet" data-idx="${i}"></td>
+                    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBestArtikel(${i})"><i class="bi bi-x"></i></button></td>
+                </tr>`).join('');
+        }
+        
+        function removeBestArtikel(idx) {
+            const artiklar = getBestArtiklarFromForm();
+            artiklar.splice(idx, 1);
+            renderBestArtiklar(artiklar);
+        }
+        
+        function getBestArtiklarFromForm() {
+            const rows = document.querySelectorAll('#bestArtiklarBody tr');
+            return Array.from(rows).map(row => ({
+                artikelnr:   row.querySelector('[data-best-field="artikelnr"]')?.value  || '',
+                beskrivning: row.querySelector('[data-best-field="beskrivning"]')?.value || '',
+                markning:    row.querySelector('[data-best-field="markning"]')?.value    || '',
+                antal:       row.querySelector('[data-best-field="antal"]')?.value       || '',
+                enhet:       row.querySelector('[data-best-field="enhet"]')?.value       || 'm'
+            }));
+        }
+        
+        async function saveBestOrder() {
+            const activePill = document.querySelector('#bestStatusPills .status-pill[style*="white"]');
+            const status = activePill ? activePill.dataset.bestStatus : 'oppen';
+
+            const b = {
+                id:           currentEditingBestId || ('best_' + Date.now().toString(36)),
+                ordernr:      document.getElementById('bestOrdernr').value,
+                datum:        document.getElementById('bestDatum').value,
+                levdatum:     document.getElementById('bestLevdatum').value,
+                leverantor:   document.getElementById('bestLeverantor').value,
+                referens:     document.getElementById('bestReferens').value,
+                projekt:      document.getElementById('bestProjekt').value,
+                betalning:    document.getElementById('bestBetalning').value,
+                levadress:    document.getElementById('bestLevAdress').value,
+                anteckningar: document.getElementById('bestAnteckningar').value,
+                mottagen:     document.getElementById('bestMottagen').checked,
+                artiklar:     getBestArtiklarFromForm(),
+                status
+            };
+
+            const result = await saveOrder('best', b);
+            if (result) {
+                showToast('Beställning sparad');
+                await renderBestTable();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).hide();
+            }
+        }
+        
+        async function deleteBestOrder() {
+            if (!currentEditingBestId) return;
+            if (!confirm('Ta bort denna beställning?')) return;
+            
+            const result = await deleteOrder('best', currentEditingBestId);
+            if (result) {
+                showToast('Beställning borttagen');
+                await renderBestTable();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).hide();
+            }
+        }
+        
+        // ============================================================================
+        // EVENT LISTENERS SETUP
+        // ============================================================================
+        
+        function setupEventListeners() {
+            // Login/Logout
+            document.getElementById('loginBtnMsal').addEventListener('click', handleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            // Tab switching
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    switchTab(e.currentTarget.dataset.tab);
+                });
+            });
+            
+            // Arbetsorder
+            document.getElementById('newArJobBtn').addEventListener('click', () => {
+                currentEditingJobId = null;
+                showArJobModal();
+            });
+            
+            document.getElementById('searchArInput').addEventListener('input', async () => {
+                const jobs = await loadOrders('ar');
+                renderArList(jobs);
+            });
+            
+            document.getElementById('filterArStatus').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('status-btn')) {
+                    document.querySelectorAll('#filterArStatus .status-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const jobs = await loadOrders('ar');
+                    renderArList(jobs);
+                }
+            });
+            
+            // Sömnadsorder
+            document.getElementById('newSomJobBtn').addEventListener('click', () => {
+                currentEditingJobId = null;
+                showSomJobModal();
+            });
+            
+            document.getElementById('searchSomInput').addEventListener('input', async () => {
+                const jobs = await loadOrders('som');
+                renderSomList(jobs);
+            });
+            
+            document.getElementById('filterSomStatus').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('status-btn')) {
+                    document.querySelectorAll('#filterSomStatus .status-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const jobs = await loadOrders('som');
+                    renderSomList(jobs);
+                }
+            });
+            
+            // Beställningar
+            document.getElementById('newBestBtn').addEventListener('click', () => showBestModal(null));
+            
+            document.getElementById('bestSearchInput').addEventListener('input', renderBestTable);
+            
+            document.querySelectorAll('.best-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.best-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentBestFilter = btn.dataset.bestFilter;
+                    renderBestTable();
+                });
+            });
+            
+            document.getElementById('addBestArtikelBtn').addEventListener('click', () => {
+                const artiklar = getBestArtiklarFromForm();
+                artiklar.push({ artikelnr: '', beskrivning: '', markning: '', antal: '', enhet: 'm' });
+                renderBestArtiklar(artiklar);
+            });
+            
+            document.getElementById('bestStatusPills').addEventListener('click', e => {
+                const pill = e.target.closest('.status-pill');
+                if (!pill) return;
+                document.querySelectorAll('#bestStatusPills .status-pill').forEach(p => {
+                    p.style.background = '#eee'; p.style.color = '#333';
+                });
+                pill.style.background = getPillColor(pill.dataset.bestStatus);
+                pill.style.color = 'white';
+            });
+            
+            document.getElementById('bestSaveBtn').addEventListener('click', saveBestOrder);
+            document.getElementById('bestDeleteBtn').addEventListener('click', deleteBestOrder);
+            
+            // Fortnox sync
+            document.getElementById('fortnoxSyncBtn').addEventListener('click', syncFortnox);
+            
+            // Settings
+            document.getElementById('settingsBtn').addEventListener('click', () => {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal')).show();
+            });
+            
+            document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+                const settings = {
+                    companyName: document.getElementById('settingsCompanyName').value
+                };
+                await apiCall('POST', '/settings', settings);
+                showToast('Inställningar sparade');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal')).hide();
+            });
+        }
+        
+        // ============================================================================
+        // INITIALIZE APPLICATION
+        // ============================================================================
+        
+        window.addEventListener('load', initMsal);
+    </script>
+
+</body>
+</html>
