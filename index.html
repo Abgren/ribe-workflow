@@ -1115,8 +1115,8 @@
                         redirectUri: window.location.origin + '/'
                     },
                     cache: {
-                        cacheLocation: 'localStorage',
-                        storeAuthStateInCookie: false
+                        cacheLocation: 'sessionStorage',
+                        storeAuthStateInCookie: true
                     }
                 };
                 
@@ -1157,6 +1157,10 @@
         }
         
         async function handleLogin() {
+            if (!msalInstance) {
+                alert('Inloggning är inte redo ännu. Ladda om sidan och försök igen.');
+                return;
+            }
             try {
                 const response = await msalInstance.loginPopup({
                     scopes: ['https://graph.microsoft.com/.default']
