@@ -16,22 +16,22 @@
     <!-- Bootstrap 5.3.2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Bootstrap 5.3.2 JS (krävs för modaler, dropdowns etc.) -->
+    <!-- Bootstrap 5.3.2 JS (krÃ¤vs fÃ¶r modaler, dropdowns etc.) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Bootstrap Icons 1.11.3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     
-    <!-- FullCalendar 6.1.10 (CSS ingår i JS-bunten) -->
+    <!-- FullCalendar 6.1.10 (CSS ingÃ¥r i JS-bunten) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     
     <!-- MSAL Browser 2.x (Microsofts officiella CDN) -->
     <script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
 
-    <!-- jsPDF för PDF-generering -->
+    <!-- jsPDF fÃ¶r PDF-generering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- SheetJS för Excel-generering (Sömnadsorder) -->
+    <!-- SheetJS fÃ¶r Excel-generering (SÃ¶mnadsorder) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
@@ -45,7 +45,7 @@
             --status-ny-ar: #7B4FBE;
             --status-preliminar: #2196F3;
             --status-bokad: #1976D2;
-            --status-atergång: #F57C00;
+            --status-atergÃ¥ng: #F57C00;
             --status-klar: #388E3C;
             --status-ny-som: #3D7A6F;
             --status-sy: #4E9D8F;
@@ -271,8 +271,8 @@
         .status-btn[data-status="preliminar"].active { border-color:#0d6ecc; }
         .status-btn[data-status="bokad"]         { background:#1976D2; color:white; }
         .status-btn[data-status="bokad"].active  { border-color:#0d4fa0; }
-        .status-btn[data-status="atergång"]      { background:#F57C00; color:white; }
-        .status-btn[data-status="atergång"].active { border-color:#b85700; }
+        .status-btn[data-status="atergÃ¥ng"]      { background:#F57C00; color:white; }
+        .status-btn[data-status="atergÃ¥ng"].active { border-color:#b85700; }
         .status-btn[data-status="klar"]          { background:#388E3C; color:white; }
         .status-btn[data-status="klar"].active   { border-color:#1b5e20; }
         .status-btn[data-status="sy"]            { background:#4E9D8F; color:white; }
@@ -352,8 +352,8 @@
             background-color: var(--status-bokad);
         }
         
-        .status-pill.atergång {
-            background-color: var(--status-atergång);
+        .status-pill.atergÃ¥ng {
+            background-color: var(--status-atergÃ¥ng);
         }
         
         .status-pill.klar {
@@ -666,7 +666,7 @@
             font-size: 0.85rem;
         }
         
-        /* ── GLIDANDE SIDOPANEL ──────────────────────────────────────── */
+        /* ââ GLIDANDE SIDOPANEL ââââââââââââââââââââââââââââââââââââââââ */
         .drawer-overlay {
             display: none;
             position: fixed;
@@ -727,7 +727,7 @@
         @media (max-width: 768px) {
             .drawer { width: 100vw; max-width: 100vw; }
         }
-        /* ─────────────────────────────────────────────────────────── */
+        /* âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
 
         @media (max-width: 768px) {
             .main-container {
@@ -762,9 +762,9 @@
 </head>
 <body>
 
-    <!-- TESTLÄGE-BANNER -->
+    <!-- TESTLÃGE-BANNER -->
     <div style="background:#e65100;color:white;text-align:center;padding:6px;font-size:0.85rem;font-weight:bold;position:fixed;top:0;left:0;right:0;z-index:9999;">
-        ⚠️ TESTLÄGE – Data sparas lokalt i webbläsaren, inte i molnet
+        â ï¸ TESTLÃGE â Data sparas lokalt i webblÃ¤saren, inte i molnet
     </div>
     <div style="margin-top:32px;"></div>
 
@@ -773,7 +773,7 @@
     <div class="drawer" id="mainDrawer">
         <div class="drawer-header" id="drawerHeader">
             <h5 id="drawerTitle">Order</h5>
-            <button class="drawer-close" onclick="closeDrawer()">×</button>
+            <button class="drawer-close" onclick="closeDrawer()">Ã</button>
         </div>
         <div class="drawer-body" id="drawerBody"></div>
         <div class="drawer-footer" id="drawerFooter"></div>
@@ -783,9 +783,9 @@
     <div id="loginScreen">
         <div class="login-card">
             <h1>Ribe Workflow</h1>
-            <p>Välj ditt namn för att fortsätta</p>
+            <p>VÃ¤lj ditt namn fÃ¶r att fortsÃ¤tta</p>
             <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;">
-                <option value="">-- Välj namn --</option>
+                <option value="">-- VÃ¤lj namn --</option>
                 <option>Anders</option>
                 <option>Tina</option>
                 <option>Daniel</option>
@@ -797,7 +797,7 @@
             <button class="login-btn" id="loginBtnMsal">
                 <i class="bi bi-box-arrow-in-right"></i> Logga in
             </button>
-            <p id="loginError" style="color: #d32f2f; margin-top: 1rem; display: none;">Välj ditt namn först.</p>
+            <p id="loginError" style="color: #d32f2f; margin-top: 1rem; display: none;">VÃ¤lj ditt namn fÃ¶rst.</p>
         </div>
     </div>
 
@@ -814,8 +814,8 @@
                     <button class="btn btn-light btn-sm" id="fortnoxSyncBtn" title="Synka Fortnox">
                         <i class="bi bi-arrow-repeat"></i> Synka Fortnox
                     </button>
-                    <button class="btn btn-light btn-sm" id="settingsBtn" title="Inställningar">
-                        <i class="bi bi-gear"></i> Inställningar
+                    <button class="btn btn-light btn-sm" id="settingsBtn" title="InstÃ¤llningar">
+                        <i class="bi bi-gear"></i> InstÃ¤llningar
                     </button>
                     <button class="btn btn-light btn-sm" id="logoutBtn" title="Logga ut">
                         <i class="bi bi-box-arrow-right"></i> Logga ut
@@ -830,10 +830,10 @@
                 <i class="bi bi-briefcase"></i> Arbetsorder
             </button>
             <button class="nav-link" id="tab-som" role="tab" data-tab="som">
-                <i class="bi bi-needle"></i> Sömnadsorder
+                <i class="bi bi-needle"></i> SÃ¶mnadsorder
             </button>
             <button class="nav-link" id="tab-best" role="tab" data-tab="best">
-                <i class="bi bi-box-seam"></i> Beställningar
+                <i class="bi bi-box-seam"></i> BestÃ¤llningar
             </button>
         </div>
 
@@ -847,7 +847,7 @@
                         <i class="bi bi-plus-circle"></i> Ny Arbetsorder
                     </button>
                     
-                    <input type="text" class="form-control search-box" id="searchArInput" placeholder="Sök ordernr/projekt...">
+                    <input type="text" class="form-control search-box" id="searchArInput" placeholder="SÃ¶k ordernr/projekt...">
                     
                     <div>
                         <div class="status-filter" id="filterArStatus">
@@ -856,7 +856,7 @@
                             <button class="status-btn" data-status="ny">NY</button>
                             <button class="status-btn" data-status="preliminar">Prel.</button>
                             <button class="status-btn" data-status="bokad">Bokad</button>
-                            <button class="status-btn" data-status="atergång">Återgång</button>
+                            <button class="status-btn" data-status="atergÃ¥ng">ÃtergÃ¥ng</button>
                             <button class="status-btn" data-status="klar">Klar</button>
                         </div>
                         
@@ -869,14 +869,14 @@
                 </div>
             </div>
             
-            <!-- SÖMNADSORDER TAB -->
+            <!-- SÃMNADSORDER TAB -->
             <div class="tab-panel tab-panel-som">
                 <div class="sidebar">
                     <button class="btn btn-custom btn-primary-som w-100 mb-3" id="newSomJobBtn">
-                        <i class="bi bi-plus-circle"></i> Ny sömnadsorder
+                        <i class="bi bi-plus-circle"></i> Ny sÃ¶mnadsorder
                     </button>
                     
-                    <input type="text" class="form-control search-box" id="searchSomInput" placeholder="Sök ordernr/projekt...">
+                    <input type="text" class="form-control search-box" id="searchSomInput" placeholder="SÃ¶k ordernr/projekt...">
                     
                     <div>
                         <div class="status-filter" id="filterSomStatus">
@@ -896,20 +896,20 @@
                 </div>
             </div>
             
-            <!-- BESTÄLLNINGAR TAB -->
+            <!-- BESTÃLLNINGAR TAB -->
             <div class="tab-panel tab-panel-best">
                 <div style="width: 100%; padding: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h4 style="margin: 0; color: #6A1B9A;">Beställningar</h4>
+                        <h4 style="margin: 0; color: #6A1B9A;">BestÃ¤llningar</h4>
                         <button class="btn btn-custom" id="newBestBtn" style="background: #6A1B9A; color: white;">
-                            <i class="bi bi-plus-circle"></i> Ny beställning
+                            <i class="bi bi-plus-circle"></i> Ny bestÃ¤llning
                         </button>
                     </div>
                     
                     <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                        <input type="text" class="form-control" id="bestSearchInput" placeholder="Sök ordernr..." style="max-width: 300px;">
+                        <input type="text" class="form-control" id="bestSearchInput" placeholder="SÃ¶k ordernr..." style="max-width: 300px;">
                         <button class="best-filter-btn active" data-best-filter="all">Alla</button>
-                        <button class="best-filter-btn" data-best-filter="oppen">Öppen</button>
+                        <button class="best-filter-btn" data-best-filter="oppen">Ãppen</button>
                         <button class="best-filter-btn" data-best-filter="dellevererad">Dellevererad</button>
                         <button class="best-filter-btn" data-best-filter="levererad">Levererad</button>
                         <button class="best-filter-btn" data-best-filter="avbruten">Avbruten</button>
@@ -922,12 +922,12 @@
         </div>
     </div>
     
-    <!-- Modal for Beställning -->
+    <!-- Modal for BestÃ¤llning -->
     <div class="modal fade" id="bestModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="bestModalTitle">Ny beställning</h5>
+                    <h5 class="modal-title" id="bestModalTitle">Ny bestÃ¤llning</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 
@@ -940,7 +940,7 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Beställningsdatum</label>
+                            <label class="form-label">BestÃ¤llningsdatum</label>
                             <input type="date" class="form-control" id="bestDatum">
                         </div>
                         <div class="form-section">
@@ -951,18 +951,18 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Leverantör</label>
-                            <input type="text" class="form-control" id="bestLeverantor" placeholder="Företag">
+                            <label class="form-label">LeverantÃ¶r</label>
+                            <input type="text" class="form-control" id="bestLeverantor" placeholder="FÃ¶retag">
                         </div>
                         <div class="form-section">
-                            <label class="form-label">Vår referens</label>
+                            <label class="form-label">VÃ¥r referens</label>
                             <select class="form-control" id="bestReferens"></select>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Projekt/Märkning</label>
+                            <label class="form-label">Projekt/MÃ¤rkning</label>
                             <input type="text" class="form-control" id="bestProjekt" placeholder="Projekt">
                         </div>
                         <div class="form-section">
@@ -973,7 +973,7 @@
 
                     <div class="form-section">
                         <label class="form-label">Leveransadress</label>
-                        <input type="text" class="form-control" id="bestLevAdress" value="Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö">
+                        <input type="text" class="form-control" id="bestLevAdress" value="Ribe Gardin AB, MediavÃ¤gen 11, 135 48 TyresÃ¶">
                     </div>
 
                     <!-- Artiklar -->
@@ -984,8 +984,8 @@
                                 <tr>
                                     <th>Artikelnr</th>
                                     <th>Beskrivning</th>
-                                    <th>Märkning</th>
-                                    <th style="width:80px;">Beställt antal</th>
+                                    <th>MÃ¤rkning</th>
+                                    <th style="width:80px;">BestÃ¤llt antal</th>
                                     <th style="width:80px;">Levererat antal</th>
                                     <th style="width:70px;">Enhet</th>
                                     <th style="width:70px;">Levererad</th>
@@ -995,7 +995,7 @@
                             <tbody id="bestArtiklarBody"></tbody>
                         </table>
                         <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addBestArtikelBtn">
-                            <i class="bi bi-plus"></i> Lägg till artikel
+                            <i class="bi bi-plus"></i> LÃ¤gg till artikel
                         </button>
                     </div>
 
@@ -1010,7 +1010,7 @@
                         <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Status</h6>
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="bestStatusPills">
                             <button type="button" class="status-pill active" data-best-status="oppen"
-                                style="background:#F57C00;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Öppen</button>
+                                style="background:#F57C00;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Ãppen</button>
                             <button type="button" class="status-pill" data-best-status="dellevererad"
                                 style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Dellevererad</button>
                             <button type="button" class="status-pill" data-best-status="levererad"
@@ -1025,7 +1025,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">StÃ¤ng</button>
                     <button type="button" class="btn btn-outline-secondary" id="bestDeleteBtn" style="display:none;">
                         <i class="bi bi-trash"></i> Ta bort
                     </button>
@@ -1054,7 +1054,7 @@
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">StÃ¤ng</button>
                     <button type="button" class="btn btn-custom btn-primary-ar" id="downloadJobBtn" style="display: none;">
                         <i class="bi bi-file-earmark-arrow-down"></i> <span id="downloadJobBtnLabel">Ladda ned PDF</span>
                     </button>
@@ -1071,7 +1071,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Inställningar</h5>
+                    <h5 class="modal-title">InstÃ¤llningar</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 
@@ -1095,15 +1095,15 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">Företagsnamn</label>
+                            <label class="form-label">FÃ¶retagsnamn</label>
                             <input type="text" class="form-control" id="settingsCompanyName" placeholder="Ribe">
                         </div>
                     </div>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
-                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Spara inställningar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">StÃ¤ng</button>
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">Spara instÃ¤llningar</button>
                 </div>
             </div>
         </div>
@@ -1128,7 +1128,7 @@
         let arCalendar = null;
         let somCalendar = null;
         let msSalesNames = ['Danne', 'Tessan', 'Tina', 'Anders'];
-        let msMontörNames = ['Ali', 'Hampus', 'Mukta', 'David'];
+        let msMontÃ¶rNames = ['Ali', 'Hampus', 'Mukta', 'David'];
         let msSewersNames = [];
         
         // ============================================================================
@@ -1182,7 +1182,7 @@
         // API FUNCTIONS
         // ============================================================================
         
-        // ── TESTLÄGE: Använder localStorage istället för API ─────────────────────
+        // ââ TESTLÃGE: AnvÃ¤nder localStorage istÃ¤llet fÃ¶r API âââââââââââââââââââââ
         function lsKey(type) { return `ribe_test_${type}`; }
 
         async function apiCall() { return null; }
@@ -1215,7 +1215,7 @@
             try {
                 const response = await apiCall('POST', '/fortnox/sync');
                 if (response) {
-                    showToast('Fortnox synkronisering påbörjad');
+                    showToast('Fortnox synkronisering pÃ¥bÃ¶rjad');
                     return true;
                 }
             } catch (error) {
@@ -1229,9 +1229,9 @@
         // ============================================================================
         
         async function initMsal() {
-            // Sätt upp event listeners direkt (krävs för login-knappen)
+            // SÃ¤tt upp event listeners direkt (krÃ¤vs fÃ¶r login-knappen)
             setupEventListeners();
-            // Kontrollera om användaren redan är inloggad
+            // Kontrollera om anvÃ¤ndaren redan Ã¤r inloggad
             const savedName = sessionStorage.getItem('ribeUser');
             if (savedName) {
                 currentUser = { name: savedName };
@@ -1243,7 +1243,7 @@
         }
 
         async function acquireToken() {
-            return null; // Används ej i denna version
+            return null; // AnvÃ¤nds ej i denna version
         }
 
         async function handleLogin() {
@@ -1282,7 +1282,7 @@
         // ============================================================================
 
         async function initializeApp() {
-            // Testläge: inga settings från API
+            // TestlÃ¤ge: inga settings frÃ¥n API
 
             // Initiera kalender direkt
             if (!arCalendar) initArCalendar();
@@ -1343,8 +1343,8 @@
             const container = document.getElementById('kommande-ar');
             const searchText = document.getElementById('searchArInput').value.toLowerCase();
 
-            // Kommande ordrar visar Utkast, Ny och Återgång
-            let filtered = jobs.filter(j => ['utkast','ny','atergång'].includes(j.status));
+            // Kommande ordrar visar Utkast, Ny och ÃtergÃ¥ng
+            let filtered = jobs.filter(j => ['utkast','ny','atergÃ¥ng'].includes(j.status));
 
             if (searchText) {
                 filtered = filtered.filter(j =>
@@ -1358,12 +1358,12 @@
                 return;
             }
 
-            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
-            const SL = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar' };
+            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergÃ¥ng':'#F57C00', klar:'#388E3C' };
+            const SL = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergÃ¥ng':'ÃtergÃ¥ng', klar:'Klar' };
             container.innerHTML = filtered.map(job => `
                 <div class="kommande-item" onclick="editArJob('${job.id}')">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div class="kommande-item-nr">${job.kund || job.ordernr || '–'}</div>
+                        <div class="kommande-item-nr">${job.kund || job.ordernr || 'â'}</div>
                         <span style="background:${SC[job.status]||'#999'};color:${job.status==='utkast'?'#333':'white'};padding:0.15rem 0.6rem;border-radius:12px;font-size:0.72rem;font-weight:600;">${SL[job.status]||job.status}</span>
                     </div>
                     <div class="kommande-item-info" style="color:#555;">${job.projekt || ''}</div>
@@ -1406,7 +1406,7 @@
                     'ny': '#7B1FA2',
                     'preliminar': '#7EC8E3',
                     'bokad': '#1565C0',
-                    'atergång': '#E65100',
+                    'atergÃ¥ng': '#E65100',
                     'klar': '#2E7D32'
                 },
                 som: {
@@ -1440,14 +1440,14 @@
             };
 
             const selSaljare = ['','Danne','Tina','Tess','Anders','Rita/Linda']
-                .map(n => `<option value="${n}" ${jobData.saljare === n ? 'selected' : ''}>${n || '— Välj säljare —'}</option>`).join('');
+                .map(n => `<option value="${n}" ${jobData.saljare === n ? 'selected' : ''}>${n || 'â VÃ¤lj sÃ¤ljare â'}</option>`).join('');
             const selMontor = ['','Hampus','Ali','Mukta','David','Anders']
-                .map(n => `<option value="${n}" ${jobData.montor === n ? 'selected' : ''}>${n || '— Välj montör —'}</option>`).join('');
+                .map(n => `<option value="${n}" ${jobData.montor === n ? 'selected' : ''}>${n || 'â VÃ¤lj montÃ¶r â'}</option>`).join('');
 
             // Status button colors helper (inline)
-            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
-            const statusPills = ['utkast','ny','preliminar','bokad','atergång','klar'].map(s => {
-                const lbl = {utkast:'Utkast',ny:'NY',preliminar:'Prel.',bokad:'Bokad','atergång':'Återgång',klar:'Klar'}[s];
+            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergÃ¥ng':'#F57C00', klar:'#388E3C' };
+            const statusPills = ['utkast','ny','preliminar','bokad','atergÃ¥ng','klar'].map(s => {
+                const lbl = {utkast:'Utkast',ny:'NY',preliminar:'Prel.',bokad:'Bokad','atergÃ¥ng':'ÃtergÃ¥ng',klar:'Klar'}[s];
                 const active = jobData.status === s;
                 const bg = active ? SC[s] : '#eee';
                 const col = active ? (s === 'utkast' ? '#333' : 'white') : '#333';
@@ -1459,7 +1459,7 @@
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                     <i class="bi bi-paperclip" style="color:#666;"></i>
                     <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">Ã</button>
                 </div>`).join('');
 
             const formHtml = `
@@ -1499,11 +1499,11 @@
 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
                     <div>
-                        <label class="form-label fw-semibold">Säljare</label>
+                        <label class="form-label fw-semibold">SÃ¤ljare</label>
                         <select class="form-select" id="ar_saljare">${selSaljare}</select>
                     </div>
                     <div>
-                        <label class="form-label fw-semibold">Montör</label>
+                        <label class="form-label fw-semibold">MontÃ¶r</label>
                         <select class="form-select" id="ar_montor">${selMontor}</select>
                     </div>
                 </div>
@@ -1517,7 +1517,7 @@
                         <label class="form-label fw-semibold">Bokad tid</label>
                         <div style="display:flex;align-items:center;gap:0.4rem;">
                             <input type="time" class="form-control" id="ar_bokadtid" value="${jobData.bokadtid || ''}" placeholder="--:--" style="width:110px;">
-                            <button type="button" onclick="document.getElementById('ar_bokadtid').value=''" title="Rensa tid" style="background:none;border:1px solid #ccc;border-radius:6px;color:#888;cursor:pointer;padding:0.35rem 0.5rem;font-size:1rem;line-height:1;">×</button>
+                            <button type="button" onclick="document.getElementById('ar_bokadtid').value=''" title="Rensa tid" style="background:none;border:1px solid #ccc;border-radius:6px;color:#888;cursor:pointer;padding:0.35rem 0.5rem;font-size:1rem;line-height:1;">Ã</button>
                         </div>
                     </div>
                     <div>
@@ -1528,11 +1528,11 @@
 
                 <div style="margin-bottom:1rem;">
                     <label class="form-label fw-semibold">Anteckningar</label>
-                    <textarea class="form-control" id="ar_anteckningar" rows="2" placeholder="Noteringar, info till montör...">${jobData.anteckningar || ''}</textarea>
+                    <textarea class="form-control" id="ar_anteckningar" rows="2" placeholder="Noteringar, info till montÃ¶r...">${jobData.anteckningar || ''}</textarea>
                 </div>
 
                 <div style="margin-bottom:1rem;border:2px solid #e57373;border-radius:8px;padding:0.75rem;background:#fff8f8;">
-                    <label class="form-label fw-semibold" style="color:#c62828;">⚠ Avvikelser</label>
+                    <label class="form-label fw-semibold" style="color:#c62828;">â  Avvikelser</label>
                     <textarea class="form-control" id="ar_avvikelse" rows="2" placeholder="Ange eventuella avvikelser eller problem..." style="border-color:#e57373;">${jobData.avvikelse || ''}</textarea>
                 </div>
 
@@ -1599,7 +1599,7 @@
                     `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                         <i class="bi bi-paperclip" style="color:#666;"></i>
                         <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                        <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                        <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">Ã</button>
                     </div>`).join('');
                 input.value = '';
             });
@@ -1612,7 +1612,7 @@
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                     <i class="bi bi-paperclip" style="color:#666;"></i>
                     <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">Ã</button>
                 </div>`).join('');
         }
 
@@ -1675,7 +1675,7 @@
                     const startStr = info.event.startStr;
                     const newStart = startStr.split('T')[0];
 
-                    // If dragged in week/day view, time is included — update bokadtid too
+                    // If dragged in week/day view, time is included â update bokadtid too
                     if (startStr.includes('T')) {
                         job.bokadtid = startStr.split('T')[1].substring(0, 5);
                     }
@@ -1707,7 +1707,7 @@
                     job.slutdatum = endDate.toISOString().split('T')[0];
 
                     await saveOrder('ar', job);
-                    showToast(`Slutdatum ändrat till ${job.slutdatum}`);
+                    showToast(`Slutdatum Ã¤ndrat till ${job.slutdatum}`);
                     await loadAndRenderArJobs();
                 },
                 eventClick: async (info) => {
@@ -1720,14 +1720,14 @@
                 },
                 eventDidMount: (info) => {
                     info.el.style.cursor = 'grab';
-                    info.el.title = `${info.event.title}${info.event.extendedProps.montor ? ' · ' + info.event.extendedProps.montor : ''}`;
+                    info.el.title = `${info.event.title}${info.event.extendedProps.montor ? ' Â· ' + info.event.extendedProps.montor : ''}`;
                 }
             });
             arCalendar.render();
         }
         
         // ============================================================================
-        // SÖMNADSORDER (SOM) FUNCTIONS
+        // SÃMNADSORDER (SOM) FUNCTIONS
         // ============================================================================
         
         async function loadAndRenderSomJobs() {
@@ -1757,7 +1757,7 @@
 
             container.innerHTML = filtered.map(job => `
                 <div class="kommande-item" onclick="editSomJob('${job.id}')" style="border-left-color: var(--color-som-primary);">
-                    <div class="kommande-item-nr" style="color: var(--color-som-primary);">${job.ordernr || '–'}</div>
+                    <div class="kommande-item-nr" style="color: var(--color-som-primary);">${job.ordernr || 'â'}</div>
                     <div class="kommande-item-info">${job.projekt || ''}</div>
                     <div class="kommande-item-info">
                         <span class="status-pill ${job.status}">${job.status}</span>
@@ -1803,7 +1803,7 @@
                 leveransdatum: formatDate(new Date())
             };
             
-            document.getElementById('jobModalTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr}`;
+            document.getElementById('jobModalTitle').textContent = isNew ? 'Ny SÃ¶mnadsorder' : `SÃ¶mnadsorder ${jobData.ordernr}`;
             
             let formHtml = `
                 <div class="form-section">
@@ -1843,10 +1843,10 @@
                 </div>
             `;
             
-            // Öppna i drawer
+            // Ãppna i drawer
             const header = document.getElementById('drawerHeader');
             header.className = 'drawer-header som';
-            document.getElementById('drawerTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr || ''}`;
+            document.getElementById('drawerTitle').textContent = isNew ? 'Ny SÃ¶mnadsorder' : `SÃ¶mnadsorder ${jobData.ordernr || ''}`;
             document.getElementById('drawerBody').innerHTML = formHtml;
             document.getElementById('drawerFooter').innerHTML = `
                 <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
@@ -1872,7 +1872,7 @@
         }
 
         async function deleteSomJobFromDrawer(id) {
-            if (!confirm('Ta bort sömnadsorder?')) return;
+            if (!confirm('Ta bort sÃ¶mnadsorder?')) return;
             await deleteOrder('som', id);
             closeDrawer();
             await loadAndRenderSomJobs();
@@ -1894,7 +1894,7 @@
 
             const result = await saveOrder('som', jobData);
             if (result) {
-                showToast('Sömnadsorder sparad');
+                showToast('SÃ¶mnadsorder sparad');
                 closeDrawer();
                 await loadAndRenderSomJobs();
             }
@@ -1928,7 +1928,7 @@
         }
         
         // ============================================================================
-        // BESTÄLLNINGAR (BEST) FUNCTIONS
+        // BESTÃLLNINGAR (BEST) FUNCTIONS
         // ============================================================================
         
         async function renderBestTable() {
@@ -1949,7 +1949,7 @@
             }
             
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">Inga beställningar</p>';
+                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">Inga bestÃ¤llningar</p>';
                 return;
             }
             
@@ -1958,7 +1958,7 @@
                     <thead>
                         <tr>
                             <th>Ordernr</th>
-                            <th>Leverantör</th>
+                            <th>LeverantÃ¶r</th>
                             <th>Leveransdatum</th>
                             <th>Status</th>
                             <th>Mottagen</th>
@@ -1995,17 +1995,17 @@
             }
             
             const refSel = document.getElementById('bestReferens');
-            refSel.innerHTML = '<option value="">-- Välj säljare --</option>' +
+            refSel.innerHTML = '<option value="">-- VÃ¤lj sÃ¤ljare --</option>' +
                 msSalesNames.map(n => `<option value="${n}" ${b && b.referens === n ? 'selected' : ''}>${n}</option>`).join('');
 
-            document.getElementById('bestModalTitle').textContent = b ? `Beställning ${b.ordernr}` : 'Ny beställning';
+            document.getElementById('bestModalTitle').textContent = b ? `BestÃ¤llning ${b.ordernr}` : 'Ny bestÃ¤llning';
             document.getElementById('bestOrdernr').value   = b ? b.ordernr   : generateBestOrdernr();
             document.getElementById('bestDatum').value     = b ? b.datum     : formatDate(new Date());
             document.getElementById('bestLevdatum').value  = b ? b.levdatum  : '';
             document.getElementById('bestLeverantor').value= b ? b.leverantor: '';
             document.getElementById('bestProjekt').value   = b ? b.projekt   : '';
             document.getElementById('bestBetalning').value = b ? b.betalning  : '30 dagar netto';
-            document.getElementById('bestLevAdress').value = b ? b.levadress  : 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö';
+            document.getElementById('bestLevAdress').value = b ? b.levadress  : 'Ribe Gardin AB, MediavÃ¤gen 11, 135 48 TyresÃ¶';
             document.getElementById('bestAnteckningar').value = b ? b.anteckningar : '';
             document.getElementById('bestMottagen').checked  = b ? !!b.mottagen : false;
 
@@ -2031,7 +2031,7 @@
                 <tr style="${a.levererad ? 'background:#e8f5e9;text-decoration:line-through;opacity:0.7;' : ''}">
                     <td><input type="text" value="${a.artikelnr || ''}" placeholder="Artikelnr" data-best-field="artikelnr" data-idx="${i}"></td>
                     <td><input type="text" value="${a.beskrivning || ''}" placeholder="Beskrivning" data-best-field="beskrivning" data-idx="${i}"></td>
-                    <td><input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}"></td>
+                    <td><input type="text" value="${a.markning || ''}" placeholder="MÃ¤rkning" data-best-field="markning" data-idx="${i}"></td>
                     <td><input type="number" value="${a.bestalt_antal || ''}" placeholder="0" data-best-field="bestalt_antal" data-idx="${i}"></td>
                     <td><input type="number" value="${a.levererat_antal || ''}" placeholder="0" data-best-field="levererat_antal" data-idx="${i}"></td>
                     <td><input type="text" value="${a.enhet || 'm'}" placeholder="enhet" data-best-field="enhet" data-idx="${i}"></td>
@@ -2091,7 +2091,7 @@
 
             const result = await saveOrder('best', b);
             if (result) {
-                showToast('Beställning sparad');
+                showToast('BestÃ¤llning sparad');
                 await renderBestTable();
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).hide();
             }
@@ -2099,11 +2099,11 @@
         
         async function deleteBestOrder() {
             if (!currentEditingBestId) return;
-            if (!confirm('Ta bort denna beställning?')) return;
+            if (!confirm('Ta bort denna bestÃ¤llning?')) return;
             
             const result = await deleteOrder('best', currentEditingBestId);
             if (result) {
-                showToast('Beställning borttagen');
+                showToast('BestÃ¤llning borttagen');
                 await renderBestTable();
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).hide();
             }
@@ -2145,7 +2145,7 @@
                 }
             });
             
-            // Sömnadsorder
+            // SÃ¶mnadsorder
             document.getElementById('newSomJobBtn').addEventListener('click', () => {
                 currentEditingJobId = null;
                 showSomJobModal();
@@ -2165,7 +2165,7 @@
                 }
             });
             
-            // Beställningar
+            // BestÃ¤llningar
             document.getElementById('newBestBtn').addEventListener('click', () => showBestModal(null));
             
             document.getElementById('bestSearchInput').addEventListener('input', renderBestTable);
@@ -2211,7 +2211,7 @@
                     companyName: document.getElementById('settingsCompanyName').value
                 };
                 await apiCall('POST', '/settings', settings);
-                showToast('Inställningar sparade');
+                showToast('InstÃ¤llningar sparade');
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal')).hide();
             });
         }
