@@ -662,12 +662,13 @@
             <p>Välj ditt namn för att fortsätta</p>
             <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;">
                 <option value="">-- Välj namn --</option>
-                <option>Anders Berggren</option>
-                <option>Rita Berggren</option>
-                <option>Medarbetare 3</option>
-                <option>Medarbetare 4</option>
-                <option>Medarbetare 5</option>
-                <option>Medarbetare 6</option>
+                <option>Anders</option>
+                <option>Tina</option>
+                <option>Daniel</option>
+                <option>Lilly</option>
+                <option>Tess</option>
+                <option>Ali</option>
+                <option>Linda</option>
             </select>
             <button class="login-btn" id="loginBtnMsal">
                 <i class="bi bi-box-arrow-in-right"></i> Logga in
@@ -1226,25 +1227,26 @@
         function renderArList(jobs) {
             const container = document.getElementById('kommande-ar');
             const searchText = document.getElementById('searchArInput').value.toLowerCase();
-            const statusFilter = document.querySelector('#filterArStatus .status-btn.active')?.dataset.status || 'all';
-            
-            let filtered = jobs;
-            
-            if (statusFilter !== 'all') {
-                filtered = filtered.filter(j => j.status === statusFilter);
-            }
-            
+
+            // Kommande ordrar visar bara Utkast och Ny
+            let filtered = jobs.filter(j => j.status === 'utkast' || j.status === 'ny');
+
             if (searchText) {
-                filtered = filtered.filter(j => 
+                filtered = filtered.filter(j =>
                     (j.ordernr || '').toLowerCase().includes(searchText) ||
                     (j.projekt || '').toLowerCase().includes(searchText)
                 );
             }
-            
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="padding:1rem;color:#999;font-size:0.9rem;">Inga kommande ordrar</div>';
+                return;
+            }
+
             container.innerHTML = filtered.map(job => `
                 <div class="kommande-item" onclick="editArJob('${job.id}')">
-                    <div class="kommande-item-nr">${job.ordernr}</div>
-                    <div class="kommande-item-info">${job.projekt}</div>
+                    <div class="kommande-item-nr">${job.ordernr || '–'}</div>
+                    <div class="kommande-item-info">${job.projekt || ''}</div>
                     <div class="kommande-item-info">
                         <span class="status-pill ${job.status}">${job.status}</span>
                     </div>
@@ -1314,8 +1316,8 @@
             // Build form HTML
             let formHtml = `
                 <div class="form-section">
-                    <label class="form-label">Ordernr</label>
-                    <input type="text" class="form-control ar-field" id="ar_ordernr" value="${jobData.ordernr || ''}" readonly style="background: #f0f0f0;">
+                    <label class="form-label">Fortnox Ordernr</label>
+                    <input type="text" class="form-control ar-field" id="ar_ordernr" value="${jobData.ordernr || ''}" placeholder="Ange Fortnox ordernummer">
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -1435,25 +1437,26 @@
         function renderSomList(jobs) {
             const container = document.getElementById('kommande-som');
             const searchText = document.getElementById('searchSomInput').value.toLowerCase();
-            const statusFilter = document.querySelector('#filterSomStatus .status-btn.active')?.dataset.status || 'all';
-            
-            let filtered = jobs;
-            
-            if (statusFilter !== 'all') {
-                filtered = filtered.filter(j => j.status === statusFilter);
-            }
-            
+
+            // Kommande ordrar visar bara Utkast och Ny
+            let filtered = jobs.filter(j => j.status === 'utkast' || j.status === 'ny');
+
             if (searchText) {
-                filtered = filtered.filter(j => 
+                filtered = filtered.filter(j =>
                     (j.ordernr || '').toLowerCase().includes(searchText) ||
                     (j.projekt || '').toLowerCase().includes(searchText)
                 );
             }
-            
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="padding:1rem;color:#999;font-size:0.9rem;">Inga kommande ordrar</div>';
+                return;
+            }
+
             container.innerHTML = filtered.map(job => `
                 <div class="kommande-item" onclick="editSomJob('${job.id}')" style="border-left-color: var(--color-som-primary);">
-                    <div class="kommande-item-nr" style="color: var(--color-som-primary);">${job.ordernr}</div>
-                    <div class="kommande-item-info">${job.projekt}</div>
+                    <div class="kommande-item-nr" style="color: var(--color-som-primary);">${job.ordernr || '–'}</div>
+                    <div class="kommande-item-info">${job.projekt || ''}</div>
                     <div class="kommande-item-info">
                         <span class="status-pill ${job.status}">${job.status}</span>
                     </div>
@@ -1502,8 +1505,8 @@
             
             let formHtml = `
                 <div class="form-section">
-                    <label class="form-label">Ordernr</label>
-                    <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" readonly style="background: #f0f0f0;">
+                    <label class="form-label">Fortnox Ordernr</label>
+                    <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" placeholder="Ange Fortnox ordernummer">
                 </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
