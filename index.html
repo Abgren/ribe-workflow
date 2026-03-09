@@ -659,11 +659,20 @@
     <div id="loginScreen">
         <div class="login-card">
             <h1>Ribe Workflow</h1>
-            <p>Logga in med ditt Microsoft-konto för att fortsätta</p>
+            <p>Välj ditt namn för att fortsätta</p>
+            <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;">
+                <option value="">-- Välj namn --</option>
+                <option>Anders Berggren</option>
+                <option>Rita Berggren</option>
+                <option>Medarbetare 3</option>
+                <option>Medarbetare 4</option>
+                <option>Medarbetare 5</option>
+                <option>Medarbetare 6</option>
+            </select>
             <button class="login-btn" id="loginBtnMsal">
-                <i class="bi bi-microsoft"></i> Logga in med Microsoft
+                <i class="bi bi-box-arrow-in-right"></i> Logga in
             </button>
-            <p id="loginError" style="color: #d32f2f; margin-top: 1rem; display: none;"></p>
+            <p id="loginError" style="color: #d32f2f; margin-top: 1rem; display: none;">Välj ditt namn först.</p>
         </div>
     </div>
 
@@ -1103,84 +1112,37 @@
         // ============================================================================
         
         async function initMsal() {
-            try {
-                // Fetch config from backend
-                const configResponse = await fetch('/api/config');
-                const config = await configResponse.json();
-                
-                const msalConfig = {
-                    auth: {
-                        clientId: config.clientId,
-                        authority: `https://login.microsoftonline.com/${config.tenantId}`,
-                        redirectUri: window.location.origin + '/'
-                    },
-                    cache: {
-                        cacheLocation: 'sessionStorage',
-                        storeAuthStateInCookie: true
-                    }
-                };
-                
-                msalInstance = new msal.PublicClientApplication(msalConfig);
-                await msalInstance.initialize();
-                
-                // Check if user is already logged in
-                const accounts = msalInstance.getAllAccounts();
-                if (accounts.length > 0) {
-                    currentUser = accounts[0];
-                    await acquireToken();
-                    showMainApp();
-                    await initializeApp();
-                } else {
-                    showLoginScreen();
-                }
-            } catch (error) {
-                console.error('MSAL initialization error:', error);
-                showToast('Initialisering av login misslyckades', 'error');
-            }
-        }
-        
-        async function acquireToken() {
-            try {
-                const request = {
-                    scopes: ['https://graph.microsoft.com/.default'],
-                    account: currentUser
-                };
-                
-                const response = await msalInstance.acquireTokenSilent(request);
-                accessToken = response.accessToken;
-                return accessToken;
-            } catch (error) {
-                console.error('Token acquisition error:', error);
-                showToast('Kunde inte hämta åtkomsttoken', 'error');
-                return null;
-            }
-        }
-        
-        async function handleLogin() {
-            if (!msalInstance) {
-                alert('Inloggning är inte redo ännu. Ladda om sidan och försök igen.');
-                return;
-            }
-            try {
-                const response = await msalInstance.loginPopup({
-                    scopes: ['https://graph.microsoft.com/.default']
-                });
-                
-                currentUser = response.account;
-                msalInstance.setActiveAccount(currentUser);
-                accessToken = response.accessToken;
-                
+            // Kontrollera om användaren redan är inloggad
+            const savedName = sessionStorage.getItem('ribeUser');
+            if (savedName) {
+                currentUser = { name: savedName };
                 showMainApp();
                 await initializeApp();
-            } catch (error) {
-                console.error('Login error:', error);
-                document.getElementById('loginError').textContent = 'Inloggning misslyckades. Försök igen.';
-                document.getElementById('loginError').style.display = 'block';
+            } else {
+                showLoginScreen();
             }
         }
-        
+
+        async function acquireToken() {
+            return null; // Används ej i denna version
+        }
+
+        async function handleLogin() {
+            const name = document.getElementById('nameSelect').value;
+            if (!name) {
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+            sessionStorage.setItem('ribeUser', name);
+            currentUser = { name: name };
+            showMainApp();
+            await initializeApp();
+        }
+
         function handleLogout() {
-            msalInstance.logout();
+            sessionStorage.removeItem('ribeUser');
+            currentUser = null;
+            showLoginScreen();
         }
         
         function showLoginScreen() {
