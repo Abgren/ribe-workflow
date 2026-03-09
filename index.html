@@ -25,8 +25,8 @@
     <!-- FullCalendar 6.1.10 (CSS ingår i JS-bunten) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     
-    <!-- MSAL Browser 3.7.1 -->
-    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.7.1/dist/msal-browser.min.js"></script>
+    <!-- MSAL Browser 2.x (Microsofts officiella CDN) -->
+    <script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
 
     <!-- jsPDF för PDF-generering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1120,7 +1120,7 @@
                     }
                 };
                 
-                msalInstance = new msalBrowser.PublicClientApplication(msalConfig);
+                msalInstance = new msal.PublicClientApplication(msalConfig);
                 await msalInstance.initialize();
                 
                 // Check if user is already logged in
