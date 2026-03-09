@@ -1112,6 +1112,8 @@
         // ============================================================================
         
         async function initMsal() {
+            // Sätt upp event listeners direkt (krävs för login-knappen)
+            setupEventListeners();
             // Kontrollera om användaren redan är inloggad
             const savedName = sessionStorage.getItem('ribeUser');
             if (savedName) {
