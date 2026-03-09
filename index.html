@@ -36,21 +36,28 @@
     
     <style>
         :root {
-            --color-ar-primary: #1565C0;
-            --color-ar-dark: #0D47A1;
-            --color-som-primary: #00695C;
-            --color-som-light: #00897B;
-            --bg-light: #EEF2F7;
+            --color-ar-primary: #4A6FA5;
+            --color-ar-dark: #3A5A8A;
+            --color-som-primary: #3D7A6F;
+            --color-som-light: #4E9D8F;
+            --bg-light: #F0F2F5;
             --status-utkast: #9E9E9E;
-            --status-ny-ar: #7B1FA2;
-            --status-preliminar: #7EC8E3;
-            --status-bokad: #1565C0;
-            --status-atergång: #E65100;
-            --status-klar: #2E7D32;
-            --status-ny-som: #00695C;
-            --status-sy: #00897B;
+            --status-ny-ar: #7B4FBE;
+            --status-preliminar: #2196F3;
+            --status-bokad: #1976D2;
+            --status-atergång: #F57C00;
+            --status-klar: #388E3C;
+            --status-ny-som: #3D7A6F;
+            --status-sy: #4E9D8F;
         }
         
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background-color: var(--bg-light);
@@ -110,9 +117,15 @@
         #mainApp {
             display: none;
         }
+        #mainApp.visible {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
         
         .navbar-main {
-            background: linear-gradient(90deg, var(--color-ar-primary) 0%, #0D47A1 100%);
+            background: linear-gradient(90deg, var(--color-ar-primary) 0%, var(--color-ar-dark) 100%);
             padding: 0.75rem 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
@@ -171,20 +184,21 @@
         
         .main-container {
             display: flex;
-            height: calc(100vh - 180px);
-            gap: 1rem;
-            padding: 1rem;
+            flex: 1;
+            overflow: hidden;
         }
         
         .sidebar {
-            width: 280px;
+            width: 220px;
+            min-width: 200px;
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow-y: auto;
+            height: 100%;
         }
-        
+
         .calendar-container {
             flex: 1;
             background: white;
@@ -192,6 +206,18 @@
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow-y: auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-container > div[id^="calendar"] {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .fc {
+            height: 100% !important;
         }
         
         .search-box {
@@ -204,9 +230,13 @@
         .tab-panel {
             display: none;
         }
-        
+
         .tab-panel.active {
             display: flex;
+            flex: 1;
+            gap: 1rem;
+            padding: 1rem;
+            overflow: hidden;
         }
         
         .status-filter {
@@ -218,23 +248,37 @@
         
         .status-btn {
             padding: 0.35rem 0.75rem;
-            border: none;
+            border: 2px solid transparent;
             border-radius: 20px;
             font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             font-weight: 500;
             background-color: #f0f0f0;
-            color: #333;
+            color: #555;
+            opacity: 0.6;
         }
-        
         .status-btn.active {
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+            opacity: 1;
             transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
-        
+        .status-btn[data-status="utkast"]       { background:#9E9E9E; color:white; }
+        .status-btn[data-status="utkast"].active { border-color:#616161; }
+        .status-btn[data-status="ny"]            { background:#7B4FBE; color:white; }
+        .status-btn[data-status="ny"].active     { border-color:#4a2d7a; }
+        .status-btn[data-status="preliminar"]    { background:#2196F3; color:white; }
+        .status-btn[data-status="preliminar"].active { border-color:#0d6ecc; }
+        .status-btn[data-status="bokad"]         { background:#1976D2; color:white; }
+        .status-btn[data-status="bokad"].active  { border-color:#0d4fa0; }
+        .status-btn[data-status="atergång"]      { background:#F57C00; color:white; }
+        .status-btn[data-status="atergång"].active { border-color:#b85700; }
+        .status-btn[data-status="klar"]          { background:#388E3C; color:white; }
+        .status-btn[data-status="klar"].active   { border-color:#1b5e20; }
+        .status-btn[data-status="sy"]            { background:#4E9D8F; color:white; }
+        .status-btn[data-status="sy"].active     { border-color:#2e6b60; }
         .status-btn.all {
-            background-color: #1565C0;
+            background-color: #4A6FA5;
             color: white;
         }
         
@@ -622,6 +666,69 @@
             font-size: 0.85rem;
         }
         
+        /* ── GLIDANDE SIDOPANEL ──────────────────────────────────────── */
+        .drawer-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            z-index: 1040;
+        }
+        .drawer-overlay.open { display: block; }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -75vw;
+            width: 72vw;
+            max-width: 860px;
+            min-width: 320px;
+            height: 100vh;
+            background: white;
+            z-index: 1050;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+            transition: right 0.3s cubic-bezier(.4,0,.2,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .drawer.open { right: 0; }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: var(--color-ar-primary);
+            color: white;
+            flex-shrink: 0;
+        }
+        .drawer-header.som { background: var(--color-som-primary); }
+        .drawer-header h5 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+        .drawer-close {
+            background: none; border: none; color: white;
+            font-size: 1.5rem; cursor: pointer; line-height: 1;
+        }
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .drawer-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            background: #fafafa;
+        }
+
+        @media (max-width: 768px) {
+            .drawer { width: 100vw; max-width: 100vw; }
+        }
+        /* ─────────────────────────────────────────────────────────── */
+
         @media (max-width: 768px) {
             .main-container {
                 flex-direction: column;
@@ -654,6 +761,23 @@
     </style>
 </head>
 <body>
+
+    <!-- TESTLÄGE-BANNER -->
+    <div style="background:#e65100;color:white;text-align:center;padding:6px;font-size:0.85rem;font-weight:bold;position:fixed;top:0;left:0;right:0;z-index:9999;">
+        ⚠️ TESTLÄGE – Data sparas lokalt i webbläsaren, inte i molnet
+    </div>
+    <div style="margin-top:32px;"></div>
+
+    <!-- GLIDANDE SIDOPANEL -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <div class="drawer" id="mainDrawer">
+        <div class="drawer-header" id="drawerHeader">
+            <h5 id="drawerTitle">Order</h5>
+            <button class="drawer-close" onclick="closeDrawer()">×</button>
+        </div>
+        <div class="drawer-body" id="drawerBody"></div>
+        <div class="drawer-footer" id="drawerFooter"></div>
+    </div>
 
     <!-- LOGIN SCREEN -->
     <div id="loginScreen">
@@ -1011,6 +1135,18 @@
         // UTILITY FUNCTIONS
         // ============================================================================
         
+        function openDrawer() {
+            document.getElementById('mainDrawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            document.getElementById('mainDrawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -1046,53 +1182,33 @@
         // API FUNCTIONS
         // ============================================================================
         
-        async function apiCall(method, endpoint, body = null) {
-            try {
-                const options = {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                };
-                
-                if (body) {
-                    options.body = JSON.stringify(body);
-                }
-                
-                const response = await fetch(`/api${endpoint}`, options);
-                
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        handleLogout();
-                        return null;
-                    }
-                    throw new Error(`API Error: ${response.status}`);
-                }
-                
-                return await response.json();
-            } catch (error) {
-                console.error('API Call Error:', error);
-                showToast(`Fel: ${error.message}`, 'error');
-                return null;
-            }
-        }
-        
+        // ── TESTLÄGE: Använder localStorage istället för API ─────────────────────
+        function lsKey(type) { return `ribe_test_${type}`; }
+
+        async function apiCall() { return null; }
+
         async function loadOrders(type) {
-            const endpoint = `/orders/${type}`;
-            return await apiCall('GET', endpoint) || [];
+            const data = localStorage.getItem(lsKey(type));
+            return data ? JSON.parse(data) : [];
         }
-        
+
         async function saveOrder(type, order) {
-            const isNew = !order.id;
-            const endpoint = isNew ? `/orders/${type}` : `/orders/${type}/${order.id}`;
-            const method = isNew ? 'POST' : 'PUT';
-            return await apiCall(method, endpoint, order);
+            const orders = await loadOrders(type);
+            if (!order.id) {
+                order.id = Date.now().toString();
+                orders.push(order);
+            } else {
+                const idx = orders.findIndex(o => o.id === order.id);
+                if (idx >= 0) orders[idx] = order; else orders.push(order);
+            }
+            localStorage.setItem(lsKey(type), JSON.stringify(orders));
+            return order;
         }
-        
+
         async function deleteOrder(type, id) {
-            const endpoint = `/orders/${type}/${id}`;
-            return await apiCall('DELETE', endpoint);
+            const orders = await loadOrders(type);
+            localStorage.setItem(lsKey(type), JSON.stringify(orders.filter(o => o.id !== id)));
+            return true;
         }
         
         async function syncFortnox() {
@@ -1150,28 +1266,27 @@
         
         function showLoginScreen() {
             document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').className = '';
             document.getElementById('mainApp').style.display = 'none';
         }
-        
+
         function showMainApp() {
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
+            const app = document.getElementById('mainApp');
+            app.style.display = '';
+            app.classList.add('visible');
         }
-        
+
         // ============================================================================
         // APPLICATION INITIALIZATION
         // ============================================================================
-        
+
         async function initializeApp() {
-            // Load settings
-            const settingsResp = await apiCall('GET', '/settings');
-            if (settingsResp) {
-                document.getElementById('settingsTenantId').value = settingsResp.tenantId || '';
-                document.getElementById('settingsClientId').value = settingsResp.clientId || '';
-                document.getElementById('settingsRedirectUri').value = settingsResp.redirectUri || '';
-                document.getElementById('settingsCompanyName').value = settingsResp.companyName || '';
-            }
-            
+            // Testläge: inga settings från API
+
+            // Initiera kalender direkt
+            if (!arCalendar) initArCalendar();
+
             // Load initial data for AR tab
             await loadAndRenderArJobs();
             
@@ -1228,8 +1343,8 @@
             const container = document.getElementById('kommande-ar');
             const searchText = document.getElementById('searchArInput').value.toLowerCase();
 
-            // Kommande ordrar visar bara Utkast och Ny
-            let filtered = jobs.filter(j => j.status === 'utkast' || j.status === 'ny');
+            // Kommande ordrar visar Utkast, Ny och Återgång
+            let filtered = jobs.filter(j => ['utkast','ny','atergång'].includes(j.status));
 
             if (searchText) {
                 filtered = filtered.filter(j =>
@@ -1243,13 +1358,17 @@
                 return;
             }
 
+            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
+            const SL = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar' };
             container.innerHTML = filtered.map(job => `
                 <div class="kommande-item" onclick="editArJob('${job.id}')">
-                    <div class="kommande-item-nr">${job.ordernr || '–'}</div>
-                    <div class="kommande-item-info">${job.projekt || ''}</div>
-                    <div class="kommande-item-info">
-                        <span class="status-pill ${job.status}">${job.status}</span>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="kommande-item-nr">${job.kund || job.ordernr || '–'}</div>
+                        <span style="background:${SC[job.status]||'#999'};color:${job.status==='utkast'?'#333':'white'};padding:0.15rem 0.6rem;border-radius:12px;font-size:0.72rem;font-weight:600;">${SL[job.status]||job.status}</span>
                     </div>
+                    <div class="kommande-item-info" style="color:#555;">${job.projekt || ''}</div>
+                    ${job.startdatum ? `<div class="kommande-item-info" style="color:#888;font-size:0.8rem;"><i class="bi bi-calendar3"></i> ${job.startdatum}${job.bokadtid?' kl '+job.bokadtid:''}</div>` : ''}
+                    ${job.montor ? `<div class="kommande-item-info" style="color:#888;font-size:0.8rem;"><i class="bi bi-person"></i> ${job.montor}</div>` : ''}
                 </div>
             `).join('');
         }
@@ -1258,15 +1377,23 @@
             if (!arCalendar) return;
             
             const events = jobs
-                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && job.datum)
-                .map(job => ({
-                    id: job.id,
-                    title: `${job.ordernr} - ${job.kund}`,
-                    start: job.datum,
-                    backgroundColor: getStatusColor(job.status, 'ar'),
-                    borderColor: getStatusColor(job.status, 'ar'),
-                    textColor: job.status === 'preliminar' ? '#333' : '#fff'
-                }));
+                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && (job.startdatum || job.datum))
+                .map(job => {
+                    const start = job.startdatum || job.datum;
+                    const hasTime = job.bokadtid && start;
+                    const eventStart = hasTime ? `${start}T${job.bokadtid}` : start;
+                    const end = job.slutdatum && job.slutdatum !== start ? job.slutdatum : undefined;
+                    return {
+                        id: job.id,
+                        title: `${job.kund || job.ordernr}${job.montor ? ' / ' + job.montor : ''}`,
+                        start: eventStart,
+                        end: end,
+                        backgroundColor: getStatusColor(job.status, 'ar'),
+                        borderColor: getStatusColor(job.status, 'ar'),
+                        textColor: job.status === 'preliminar' ? '#333' : '#fff',
+                        extendedProps: { montor: job.montor || '' }
+                    };
+                });
             
             arCalendar.removeAllEvents();
             arCalendar.addEventSource(events);
@@ -1305,95 +1432,224 @@
         
         function showArJobModal(job = null) {
             const isNew = !job;
+            const thisYear = new Date().getFullYear();
             const jobData = job || {
-                ordernr: generateOrderNumber('ar'),
+                ordernr: String(thisYear),
                 status: 'utkast',
-                datum: formatDate(new Date())
+                startdatum: formatDate(new Date())
             };
-            
-            document.getElementById('jobModalTitle').textContent = isNew ? 'Ny Arbetsorder' : `Arbetsorder ${jobData.ordernr}`;
-            
-            // Build form HTML
-            let formHtml = `
-                <div class="form-section">
-                    <label class="form-label">Fortnox Ordernr</label>
-                    <input type="text" class="form-control ar-field" id="ar_ordernr" value="${jobData.ordernr || ''}" placeholder="Ange Fortnox ordernummer">
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-section">
-                        <label class="form-label">Datum</label>
-                        <input type="date" class="form-control ar-field" id="ar_datum" value="${jobData.datum || ''}">
+
+            const selSaljare = ['','Danne','Tina','Tess','Anders','Rita/Linda']
+                .map(n => `<option value="${n}" ${jobData.saljare === n ? 'selected' : ''}>${n || '— Välj säljare —'}</option>`).join('');
+            const selMontor = ['','Hampus','Ali','Mukta','David','Anders']
+                .map(n => `<option value="${n}" ${jobData.montor === n ? 'selected' : ''}>${n || '— Välj montör —'}</option>`).join('');
+
+            // Status button colors helper (inline)
+            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
+            const statusPills = ['utkast','ny','preliminar','bokad','atergång','klar'].map(s => {
+                const lbl = {utkast:'Utkast',ny:'NY',preliminar:'Prel.',bokad:'Bokad','atergång':'Återgång',klar:'Klar'}[s];
+                const active = jobData.status === s;
+                const bg = active ? SC[s] : '#eee';
+                const col = active ? (s === 'utkast' ? '#333' : 'white') : '#333';
+                return `<button type="button" class="status-pill${active?' active':''}" data-ar-status="${s}" style="background:${bg};color:${col};border:2px solid ${active?SC[s]:'#ddd'};padding:0.4rem 1rem;border-radius:20px;font-size:0.85rem;cursor:pointer;font-weight:${active?'600':'400'};">${lbl}</button>`;
+            }).join('');
+
+            // Existing attachments list
+            const existingFiles = (jobData.bilagor || []).map((f,i) =>
+                `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                    <i class="bi bi-paperclip" style="color:#666;"></i>
+                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                </div>`).join('');
+
+            const formHtml = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label fw-semibold">Fortnox Ordernr</label>
+                        <input type="text" class="form-control" id="ar_ordernr" value="${jobData.ordernr || thisYear}" placeholder="${thisYear}">
                     </div>
-                    <div class="form-section">
-                        <label class="form-label">Kund</label>
-                        <input type="text" class="form-control ar-field" id="ar_kund" value="${jobData.kund || ''}" placeholder="Kundnamn">
-                    </div>
-                </div>
-                
-                <div class="form-section">
-                    <label class="form-label">Projekt</label>
-                    <input type="text" class="form-control ar-field" id="ar_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn">
-                </div>
-                
-                <div class="form-section">
-                    <h6 class="form-section-title">Status</h6>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button type="button" class="status-pill ${jobData.status === 'utkast' ? 'active' : ''}" data-ar-status="utkast" style="background: ${jobData.status === 'utkast' ? 'var(--status-utkast)' : '#eee'}; color: ${jobData.status === 'utkast' ? 'white' : '#333'};">Utkast</button>
-                        <button type="button" class="status-pill ${jobData.status === 'ny' ? 'active' : ''}" data-ar-status="ny" style="background: ${jobData.status === 'ny' ? 'var(--status-ny-ar)' : '#eee'}; color: white;">NY</button>
-                        <button type="button" class="status-pill ${jobData.status === 'preliminar' ? 'active' : ''}" data-ar-status="preliminar" style="background: ${jobData.status === 'preliminar' ? 'var(--status-preliminar)' : '#eee'}; color: ${jobData.status === 'preliminar' ? '#333' : '#333'};">Prel.</button>
-                        <button type="button" class="status-pill ${jobData.status === 'bokad' ? 'active' : ''}" data-ar-status="bokad" style="background: ${jobData.status === 'bokad' ? 'var(--status-bokad)' : '#eee'}; color: white;">Bokad</button>
-                        <button type="button" class="status-pill ${jobData.status === 'atergång' ? 'active' : ''}" data-ar-status="atergång" style="background: ${jobData.status === 'atergång' ? 'var(--status-atergång)' : '#eee'}; color: white;">Återgång</button>
-                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-ar-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar)' : '#eee'}; color: white;">Klar</button>
+                    <div>
+                        <label class="form-label fw-semibold">Kund</label>
+                        <input type="text" class="form-control" id="ar_kund" value="${jobData.kund || ''}" placeholder="Kundnamn">
                     </div>
                 </div>
-                
-                <div class="form-section">
-                    <label class="form-label">Anteckningar</label>
-                    <textarea class="form-control ar-field" id="ar_anteckningar" rows="3" placeholder="Noteringar...">${jobData.anteckningar || ''}</textarea>
+
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label fw-semibold">Projekt / Beskrivning</label>
+                    <input type="text" class="form-control" id="ar_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn eller adress">
+                </div>
+
+                <div style="background:#f8f9ff;border:1px solid #dde3f0;border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;">
+                    <div class="form-label fw-semibold" style="margin-bottom:0.6rem;color:#4A6FA5;"><i class="bi bi-person-lines-fill"></i> Kontaktperson</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                        <div>
+                            <label class="form-label" style="font-size:0.85rem;">Namn</label>
+                            <input type="text" class="form-control form-control-sm" id="ar_kontakt_namn" value="${jobData.kontakt_namn || ''}" placeholder="Kontaktnamn">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:0.85rem;">Telefon</label>
+                            <input type="tel" class="form-control form-control-sm" id="ar_kontakt_tel" value="${jobData.kontakt_tel || ''}" placeholder="07x-xxx xx xx">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.85rem;">E-post</label>
+                        <input type="email" class="form-control form-control-sm" id="ar_kontakt_mail" value="${jobData.kontakt_mail || ''}" placeholder="namn@foretag.se">
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label fw-semibold">Säljare</label>
+                        <select class="form-select" id="ar_saljare">${selSaljare}</select>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Montör</label>
+                        <select class="form-select" id="ar_montor">${selMontor}</select>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;align-items:end;margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label fw-semibold">Startdatum</label>
+                        <input type="date" class="form-control" id="ar_startdatum" value="${jobData.startdatum || ''}">
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Bokad tid</label>
+                        <div style="display:flex;align-items:center;gap:0.4rem;">
+                            <input type="time" class="form-control" id="ar_bokadtid" value="${jobData.bokadtid || ''}" placeholder="--:--" style="width:110px;">
+                            <button type="button" onclick="document.getElementById('ar_bokadtid').value=''" title="Rensa tid" style="background:none;border:1px solid #ccc;border-radius:6px;color:#888;cursor:pointer;padding:0.35rem 0.5rem;font-size:1rem;line-height:1;">×</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">Slutdatum</label>
+                        <input type="date" class="form-control" id="ar_slutdatum" value="${jobData.slutdatum || ''}">
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label fw-semibold">Anteckningar</label>
+                    <textarea class="form-control" id="ar_anteckningar" rows="2" placeholder="Noteringar, info till montör...">${jobData.anteckningar || ''}</textarea>
+                </div>
+
+                <div style="margin-bottom:1rem;border:2px solid #e57373;border-radius:8px;padding:0.75rem;background:#fff8f8;">
+                    <label class="form-label fw-semibold" style="color:#c62828;">⚠ Avvikelser</label>
+                    <textarea class="form-control" id="ar_avvikelse" rows="2" placeholder="Ange eventuella avvikelser eller problem..." style="border-color:#e57373;">${jobData.avvikelse || ''}</textarea>
+                </div>
+
+                <div style="margin-bottom:1.5rem;">
+                    <label class="form-label fw-semibold">Bilagor</label>
+                    <div id="ar_filelist" style="margin-bottom:0.5rem;">${existingFiles}</div>
+                    <label style="display:inline-flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.4rem 0.9rem;border:1px dashed #aaa;border-radius:6px;color:#555;font-size:0.9rem;background:#fafafa;">
+                        <i class="bi bi-paperclip"></i> Bifoga fil
+                        <input type="file" id="ar_filinput" multiple style="display:none;" onchange="handleArFileSelect(this)">
+                    </label>
+                </div>
+
+                <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
+                    <label class="form-label fw-semibold">Status</label>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">${statusPills}</div>
                 </div>
             `;
-            
-            document.getElementById('jobModalBody').innerHTML = formHtml;
-            
-            // Setup status pill listeners
+
+            const header = document.getElementById('drawerHeader');
+            header.className = 'drawer-header';
+            document.getElementById('drawerTitle').textContent = isNew ? 'Ny Arbetsorder' : `Arbetsorder ${jobData.ordernr || ''}`;
+            document.getElementById('drawerBody').innerHTML = formHtml;
+            document.getElementById('drawerFooter').innerHTML = `
+                <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
+                ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteArJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-ar-primary);border-color:var(--color-ar-primary);">Spara</button>
+            `;
+            document.getElementById('saveJobBtn').onclick = () => saveArJob(jobData);
+
+            // Status pill click listeners
             document.querySelectorAll('[data-ar-status]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('[data-ar-status]').forEach(b => {
-                        b.style.background = '#eee';
-                        b.style.color = '#333';
+                        b.style.background = '#eee'; b.style.color = '#333';
+                        b.style.border = '2px solid #ddd'; b.style.fontWeight = '400';
                         b.classList.remove('active');
                     });
-                    const status = e.target.dataset.arStatus;
-                    e.target.style.background = getStatusColor(status, 'ar');
-                    e.target.style.color = ['preliminar', 'utkast'].includes(status) ? '#333' : 'white';
+                    const s = e.target.dataset.arStatus;
+                    e.target.style.background = SC[s];
+                    e.target.style.color = s === 'utkast' ? '#333' : 'white';
+                    e.target.style.border = `2px solid ${SC[s]}`;
+                    e.target.style.fontWeight = '600';
                     e.target.classList.add('active');
                 });
             });
-            
-            document.getElementById('saveJobBtn').onclick = () => saveArJob(jobData);
-            
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).show();
+
+            // Store pending files on the window object for save
+            window._arPendingFiles = jobData.bilagor ? [...jobData.bilagor] : [];
+
+            openDrawer();
         }
-        
+
+        function handleArFileSelect(input) {
+            const files = Array.from(input.files);
+            const promises = files.map(f => new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve({ name: f.name, size: f.size, data: e.target.result });
+                reader.readAsDataURL(f);
+            }));
+            Promise.all(promises).then(results => {
+                window._arPendingFiles = (window._arPendingFiles || []).concat(results);
+                const list = document.getElementById('ar_filelist');
+                list.innerHTML = window._arPendingFiles.map((f,i) =>
+                    `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                        <i class="bi bi-paperclip" style="color:#666;"></i>
+                        <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                        <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                    </div>`).join('');
+                input.value = '';
+            });
+        }
+
+        function removeArFile(idx) {
+            window._arPendingFiles.splice(idx, 1);
+            const list = document.getElementById('ar_filelist');
+            list.innerHTML = window._arPendingFiles.map((f,i) =>
+                `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                    <i class="bi bi-paperclip" style="color:#666;"></i>
+                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                </div>`).join('');
+        }
+
+        async function deleteArJobFromDrawer(id) {
+            if (!confirm('Ta bort arbetsorder?')) return;
+            await deleteOrder('ar', id);
+            closeDrawer();
+            await loadAndRenderArJobs();
+        }
+
         async function saveArJob(originalJobData) {
             const activeStatusBtn = document.querySelector('[data-ar-status].active');
             const status = activeStatusBtn?.dataset.arStatus || 'utkast';
-            
+
             const jobData = {
                 id: currentEditingJobId || ('ar_' + Date.now().toString(36) + Math.random().toString(36).slice(2)),
                 ordernr: document.getElementById('ar_ordernr').value,
-                datum: document.getElementById('ar_datum').value,
+                startdatum: document.getElementById('ar_startdatum').value,
+                slutdatum: document.getElementById('ar_slutdatum').value,
+                bokadtid: document.getElementById('ar_bokadtid').value,
                 kund: document.getElementById('ar_kund').value,
                 projekt: document.getElementById('ar_projekt').value,
+                saljare: document.getElementById('ar_saljare').value,
+                montor: document.getElementById('ar_montor').value,
+                kontakt_namn: document.getElementById('ar_kontakt_namn').value,
+                kontakt_tel: document.getElementById('ar_kontakt_tel').value,
+                kontakt_mail: document.getElementById('ar_kontakt_mail').value,
                 anteckningar: document.getElementById('ar_anteckningar').value,
+                avvikelse: document.getElementById('ar_avvikelse').value,
+                bilagor: window._arPendingFiles || [],
                 status
             };
-            
+
             const result = await saveOrder('ar', jobData);
             if (result) {
                 showToast('Arbetsorder sparad');
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).hide();
+                closeDrawer();
                 await loadAndRenderArJobs();
             }
         }
@@ -1402,6 +1658,7 @@
             const calendarEl = document.getElementById('calendar-ar');
             arCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                height: 'parent',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -1409,6 +1666,50 @@
                 },
                 locale: 'sv',
                 events: [],
+                editable: true,
+                eventDrop: async (info) => {
+                    const jobs = await loadOrders('ar');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (!job) { info.revert(); return; }
+
+                    const startStr = info.event.startStr;
+                    const newStart = startStr.split('T')[0];
+
+                    // If dragged in week/day view, time is included — update bokadtid too
+                    if (startStr.includes('T')) {
+                        job.bokadtid = startStr.split('T')[1].substring(0, 5);
+                    }
+
+                    // Move slutdatum by same delta if it exists
+                    let newSlut = job.slutdatum;
+                    if (newSlut) {
+                        const slutDate = new Date(newSlut);
+                        slutDate.setDate(slutDate.getDate() + info.delta.days);
+                        newSlut = slutDate.toISOString().split('T')[0];
+                    }
+
+                    job.startdatum = newStart;
+                    if (newSlut) job.slutdatum = newSlut;
+
+                    const tidText = job.bokadtid ? ` kl ${job.bokadtid}` : '';
+                    await saveOrder('ar', job);
+                    showToast(`Flyttad till ${newStart}${tidText}`);
+                    await loadAndRenderArJobs();
+                },
+                eventResize: async (info) => {
+                    const jobs = await loadOrders('ar');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (!job) { info.revert(); return; }
+
+                    // endStr is exclusive in FullCalendar, subtract one day for display
+                    const endDate = new Date(info.event.endStr);
+                    endDate.setDate(endDate.getDate() - 1);
+                    job.slutdatum = endDate.toISOString().split('T')[0];
+
+                    await saveOrder('ar', job);
+                    showToast(`Slutdatum ändrat till ${job.slutdatum}`);
+                    await loadAndRenderArJobs();
+                },
                 eventClick: async (info) => {
                     const jobs = await loadOrders('ar');
                     const job = jobs.find(j => j.id === info.event.id);
@@ -1418,7 +1719,8 @@
                     }
                 },
                 eventDidMount: (info) => {
-                    info.el.style.cursor = 'pointer';
+                    info.el.style.cursor = 'grab';
+                    info.el.title = `${info.event.title}${info.event.extendedProps.montor ? ' · ' + info.event.extendedProps.montor : ''}`;
                 }
             });
             arCalendar.render();
@@ -1541,15 +1843,23 @@
                 </div>
             `;
             
-            document.getElementById('jobModalBody').innerHTML = formHtml;
-            
+            // Öppna i drawer
+            const header = document.getElementById('drawerHeader');
+            header.className = 'drawer-header som';
+            document.getElementById('drawerTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr || ''}`;
+            document.getElementById('drawerBody').innerHTML = formHtml;
+            document.getElementById('drawerFooter').innerHTML = `
+                <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
+                ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteSomJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-som-primary);border-color:var(--color-som-primary);">Spara</button>
+            `;
+            document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
+
             // Setup status pill listeners
             document.querySelectorAll('[data-som-status]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('[data-som-status]').forEach(b => {
-                        b.style.background = '#eee';
-                        b.style.color = '#333';
-                        b.classList.remove('active');
+                        b.style.background = '#eee'; b.style.color = '#333'; b.classList.remove('active');
                     });
                     const status = e.target.dataset.somStatus;
                     e.target.style.background = getStatusColor(status, 'som');
@@ -1557,16 +1867,21 @@
                     e.target.classList.add('active');
                 });
             });
-            
-            document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
-            
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).show();
+
+            openDrawer();
         }
-        
+
+        async function deleteSomJobFromDrawer(id) {
+            if (!confirm('Ta bort sömnadsorder?')) return;
+            await deleteOrder('som', id);
+            closeDrawer();
+            await loadAndRenderSomJobs();
+        }
+
         async function saveSomJob(originalJobData) {
             const activeStatusBtn = document.querySelector('[data-som-status].active');
             const status = activeStatusBtn?.dataset.somStatus || 'utkast';
-            
+
             const jobData = {
                 id: currentEditingJobId || ('som_' + Date.now().toString(36) + Math.random().toString(36).slice(2)),
                 ordernr: document.getElementById('som_ordernr').value,
@@ -1576,11 +1891,11 @@
                 anteckningar: document.getElementById('som_anteckningar').value,
                 status
             };
-            
+
             const result = await saveOrder('som', jobData);
             if (result) {
                 showToast('Sömnadsorder sparad');
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('jobModal')).hide();
+                closeDrawer();
                 await loadAndRenderSomJobs();
             }
         }
@@ -1589,6 +1904,7 @@
             const calendarEl = document.getElementById('calendar-som');
             somCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                height: 'parent',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
