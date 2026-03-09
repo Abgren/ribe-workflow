@@ -32,6 +32,7 @@ app.use(helmet({
       fontSrc: [
         "'self'",
         "https://cdn.jsdelivr.net"
+        "data:"
       ],
       connectSrc: [
         "'self'",
