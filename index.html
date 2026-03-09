@@ -1120,7 +1120,7 @@
                     }
                 };
                 
-                msalInstance = new msal.PublicClientApplication(msalConfig);
+                msalInstance = new msalBrowser.PublicClientApplication(msalConfig);
                 await msalInstance.initialize();
                 
                 // Check if user is already logged in
