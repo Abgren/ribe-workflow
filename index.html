@@ -37,53 +37,53 @@
     <style>
         :root {
             /* Theme defaults (AR = Champagne) */
-            --theme-primary: #C5964A;
-            --theme-dark:    #9E7A35;
-            --theme-light:   #D4B06E;
-            --theme-bg:      #FBF5E8;
+            --theme-primary: #D4A96A;
+            --theme-dark:    #C4964A;
+            --theme-light:   #E8C88A;
+            --theme-bg:      #FEFCF5;
 
             /* Status colors */
-            --status-utkast:    #9E9E9E;
-            --status-ny-ar:     #7B4FBE;
-            --status-preliminar:#2196F3;
-            --status-bokad:     #1976D2;
-            --status-atergång:  #F57C00;
-            --status-klar:      #388E3C;
-            --status-ny-som:    #7D9E4F;
-            --status-sy:        #9DB86A;
+            --status-utkast:    #BDBDBD;
+            --status-ny-ar:     #9E80D4;
+            --status-preliminar:#64B5F6;
+            --status-bokad:     #5B9BD5;
+            --status-atergång:  #FFB74D;
+            --status-klar:      #66BB6A;
+            --status-ny-som:    #8FB265;
+            --status-sy:        #B0C882;
 
             /* Kept for login gradient */
-            --color-ar-primary: #C5964A;
-            --color-ar-dark:    #9E7A35;
-            --color-som-primary:#7D9E4F;
+            --color-ar-primary: #D4A96A;
+            --color-ar-dark:    #C4964A;
+            --color-som-primary:#8FB265;
             --bg-light: #F5F0E8;
         }
 
         /* ── CHAMPAGNE (Arbetsorder) ── */
         body[data-theme="ar"] {
-            --theme-primary: #C5964A;
-            --theme-dark:    #9E7A35;
-            --theme-light:   #D4B06E;
-            --theme-bg:      #FBF5E8;
-            background-color: #FBF5E8 !important;
+            --theme-primary: #D4A96A;
+            --theme-dark:    #C4964A;
+            --theme-light:   #E8C88A;
+            --theme-bg:      #FEFCF5;
+            background-color: #FEFCF5 !important;
         }
 
         /* ── LIGHT OLIVE (Sömnadsorder) ── */
         body[data-theme="som"] {
-            --theme-primary: #7D9E4F;
-            --theme-dark:    #5F7A3A;
-            --theme-light:   #9DB86A;
-            --theme-bg:      #F2F6EB;
-            background-color: #F2F6EB !important;
+            --theme-primary: #8FB265;
+            --theme-dark:    #7D9E4F;
+            --theme-light:   #B0C882;
+            --theme-bg:      #F7FAF2;
+            background-color: #F7FAF2 !important;
         }
 
         /* ── WARM GREY (Beställningar) ── */
         body[data-theme="best"] {
-            --theme-primary: #9A8880;
-            --theme-dark:    #74645C;
-            --theme-light:   #B5A6A0;
-            --theme-bg:      #F5F1EE;
-            background-color: #F5F1EE !important;
+            --theme-primary: #B5A8A2;
+            --theme-dark:    #9A8880;
+            --theme-light:   #CEBFBA;
+            --theme-bg:      #FAF8F6;
+            background-color: #FAF8F6 !important;
         }
         
         html, body {
@@ -96,7 +96,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background-color: var(--bg-light);
-            color: #333;
+            color: #3D3D3D;
         }
         
         #loginScreen {
@@ -123,7 +123,7 @@
         }
         
         .login-card p {
-            color: #666;
+            color: #7A7A7A;
             margin-bottom: 2rem;
             font-size: 1rem;
         }
@@ -197,7 +197,7 @@
             background: none;
             border: none;
             border-bottom: 3px solid transparent;
-            color: #666;
+            color: #7A7A7A;
             cursor: pointer;
             padding: 1rem 1.5rem;
             font-weight: 500;
@@ -298,17 +298,17 @@
             transform: scale(1.05);
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
-        .status-btn[data-status="utkast"]       { background:#9E9E9E; color:white; }
+        .status-btn[data-status="utkast"]       { background:#EEEEEE; color:#555; }
         .status-btn[data-status="utkast"].active { border-color:#616161; }
-        .status-btn[data-status="ny"]            { background:#7B4FBE; color:white; }
+        .status-btn[data-status="ny"]            { background:#EDE7FF; color:#5C3A99; }
         .status-btn[data-status="ny"].active     { border-color:#4a2d7a; }
-        .status-btn[data-status="preliminar"]    { background:#2196F3; color:white; }
+        .status-btn[data-status="preliminar"]    { background:#DCEEFF; color:#1565C0; }
         .status-btn[data-status="preliminar"].active { border-color:#0d6ecc; }
-        .status-btn[data-status="bokad"]         { background:#1976D2; color:white; }
+        .status-btn[data-status="bokad"]         { background:#D0E8FF; color:#0D47A1; }
         .status-btn[data-status="bokad"].active  { border-color:#0d4fa0; }
-        .status-btn[data-status="atergång"]      { background:#F57C00; color:white; }
+        .status-btn[data-status="atergång"]      { background:#FFE8CC; color:#BF5000; }
         .status-btn[data-status="atergång"].active { border-color:#b85700; }
-        .status-btn[data-status="klar"]          { background:#388E3C; color:white; }
+        .status-btn[data-status="klar"]          { background:#D4EDDA; color:#1B5E20; }
         .status-btn[data-status="klar"].active   { border-color:#1b5e20; }
         .status-btn[data-status="sy"]            { background:#4E9D8F; color:white; }
         .status-btn[data-status="sy"].active     { border-color:#2e6b60; }
@@ -348,7 +348,7 @@
         
         .kommande-item-info {
             font-size: 0.85rem;
-            color: #666;
+            color: #7A7A7A;
             margin-top: 0.25rem;
         }
         
@@ -367,7 +367,7 @@
         
         .status-pill.utkast {
             background-color: var(--status-utkast);
-            color: #333;
+            color: #3D3D3D;
         }
         
         .status-pill.ny-ar {
@@ -380,7 +380,7 @@
         
         .status-pill.preliminar {
             background-color: var(--status-preliminar);
-            color: #333;
+            color: #3D3D3D;
         }
         
         .status-pill.bokad {
@@ -400,7 +400,7 @@
         }
         
         .status-pill.active {
-            border-color: #333;
+            border-color: #3D3D3D;
             box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
         }
         
@@ -533,7 +533,7 @@
         .linked-order-label {
             font-weight: 600;
             font-size: 0.9rem;
-            color: #666;
+            color: #7A7A7A;
         }
         
         .linked-order-value {
