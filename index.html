@@ -1050,9 +1050,9 @@
                             <button type="button" class="status-pill" data-best-status="avbruten"
                                 style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Avbruten</button>
                         </div>
-                        <div class="mt-3 d-flex align-items-center gap-2">
-                            <input type="checkbox" id="bestMottagen" class="best-check">
-                            <label for="bestMottagen" style="font-weight:500;">Leverans mottagen</label>
+                        <div class="mt-3">
+                            <label class="form-label" style="font-weight:500;">Mottagen (datum)</label>
+                            <input type="date" class="form-control" id="bestMottagen" placeholder="Ange datum om leverans mottagits">
                         </div>
                     </div>
                 </div>
@@ -1996,6 +1996,7 @@
                     <thead>
                         <tr>
                             <th>Ordernr</th>
+                            <th>Projekt</th>
                             <th>Leverantör</th>
                             <th>Leveransdatum</th>
                             <th>Status</th>
@@ -2006,10 +2007,11 @@
                         ${filtered.map(b => `
                             <tr onclick="showBestModal('${b.id}')">
                                 <td><strong>${b.ordernr}</strong></td>
+                                <td>${b.projekt || '-'}</td>
                                 <td>${b.leverantor || '-'}</td>
                                 <td>${b.levdatum || '-'}</td>
                                 <td><span class="status-pill" style="background: ${getPillColor(b.status)}; color: ${b.status === 'levererad' || b.status === 'oppen' ? 'white' : '#333'};">${b.status}</span></td>
-                                <td>${b.mottagen ? '<i class="bi bi-check2 text-success"></i>' : '-'}</td>
+                                <td>${b.mottagen || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -2045,7 +2047,7 @@
             document.getElementById('bestBetalning').value = b ? b.betalning  : '30 dagar netto';
             document.getElementById('bestLevAdress').value = b ? b.levadress  : 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö';
             document.getElementById('bestAnteckningar').value = b ? b.anteckningar : '';
-            document.getElementById('bestMottagen').checked  = b ? !!b.mottagen : false;
+            document.getElementById('bestMottagen').value   = b ? (b.mottagen || '') : '';
 
             renderBestArtiklar(b ? b.artiklar : []);
 
@@ -2122,7 +2124,7 @@
                 betalning:    document.getElementById('bestBetalning').value,
                 levadress:    document.getElementById('bestLevAdress').value,
                 anteckningar: document.getElementById('bestAnteckningar').value,
-                mottagen:     document.getElementById('bestMottagen').checked,
+                mottagen:     document.getElementById('bestMottagen').value || '',
                 artiklar:     getBestArtiklarFromForm(),
                 status
             };
