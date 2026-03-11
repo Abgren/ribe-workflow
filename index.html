@@ -2240,9 +2240,9 @@
             if (sp) { sp.style.background = getPillColor('skickad'); sp.style.color = 'white'; }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-            // Hämta alla fält
+            // Hämta fältvärden
             const ordernr    = document.getElementById('bestOrdernr').value;
             const datum      = document.getElementById('bestDatum').value;
             const levdatum   = document.getElementById('bestLevdatum').value;
@@ -2260,124 +2260,123 @@
             const ant        = document.getElementById('bestAnteckningar').value;
             const artiklar   = getBestArtiklarFromForm();
 
+            // Beräkna total
+            let totalSEK = 0;
+            artiklar.forEach(a => { totalSEK += (parseFloat(a.bestalt_antal)||0) * (parseFloat(a.apris)||0); });
+
+            // ── HJÄLPFUNKTIONER ─────────────────────────────────────
+            const fw = (txt, x, y, size=9) => { doc.setFont('helvetica','bold'); doc.setFontSize(size); doc.text(String(txt||''), x, y); doc.setFont('helvetica','normal'); };
+            const fn = (txt, x, y, size=9) => { doc.setFont('helvetica','normal'); doc.setFontSize(size); doc.text(String(txt||''), x, y); };
+            const fi = (txt, x, y, size=8) => { doc.setFont('helvetica','italic'); doc.setFontSize(size); doc.text(String(txt||''), x, y); doc.setFont('helvetica','normal'); };
+
             // ── HEADER ──────────────────────────────────────────────
-            doc.setFont('helvetica','bold');
-            doc.setFontSize(20);
-            doc.text('Ribe Gardin AB', 14, 18);
+            fw('Ribe Gardin AB', 14, 16, 18);
+            fn('Box 2027', 14, 22, 9);
+            fn('135 02  Tyresö', 14, 27, 9);
+            fw('Beställning', 196, 16, 16);
             doc.setFont('helvetica','normal');
-            doc.setFontSize(9);
-            doc.text('Box 2027', 14, 24);
-            doc.text('135 02  Tyresö', 14, 29);
 
-            doc.setFont('helvetica','bold');
-            doc.setFontSize(16);
-            doc.text('Beställning', 196, 18, { align: 'right' });
-
-            // ── LEVERANTÖR (höger) ──────────────────────────────────
-            doc.setFont('helvetica','bold'); doc.setFontSize(9);
-            doc.text('Adress', 115, 42);
-            doc.setFont('helvetica','normal');
-            doc.text(lev || '', 145, 42);
-            const levAdrLines = levAdrLev ? levAdrLev.split(',') : [];
-            levAdrLines.forEach((line, i) => doc.text(line.trim(), 145, 47 + i * 5));
-
-            // ── INFOBOX (vänster) ───────────────────────────────────
+            // ── INFOBOX vänster (ram) ────────────────────────────────
+            // Rektangel: x=14, y=33, w=88, h=38
             doc.setLineWidth(0.3);
-            doc.rect(14, 36, 95, 38);
-            const infoRows = [
+            doc.rect(14, 33, 88, 38);
+            const infoLeft = 16;
+            const infoVal  = 70;
+            const rows = [
                 ['Beställningsdatum', datum],
                 ['Vårt kundnr', kundnr],
                 ['Vårt beställningsnr', ordernr],
-                ['Totalt SEK', ''],
+                ['Totalt SEK', totalSEK > 0 ? totalSEK.toFixed(2) : '0,00'],
                 ['Leveranstid', levdatum],
                 ['Betalningsvillkor', betalning],
             ];
-            infoRows.forEach(([label, val], i) => {
-                const y = 43 + i * 5.2;
-                doc.setFont('helvetica','bold'); doc.setFontSize(8);
-                doc.text(label, 16, y);
-                doc.setFont('helvetica','normal');
-                doc.text(String(val||''), 65, y);
+            rows.forEach(([label, val], i) => {
+                const y = 39 + i * 5.3;
+                fw(label, infoLeft, y, 8);
+                fn(val||'', infoVal, y, 8);
             });
 
-            // ── VÅR LEVERANSADRESS (höger nedre) ───────────────────
-            doc.setFont('helvetica','bold'); doc.setFontSize(9);
-            doc.text('Vår leveransadress', 115, 62);
-            doc.setFont('helvetica','normal');
-            const levAdressLines = levAdress.split(',');
-            levAdressLines.forEach((line, i) => doc.text(line.trim(), 145, 62 + i * 5));
+            // ── LEVERANTÖRSADRESS höger ──────────────────────────────
+            fw('Adress', 110, 39, 9);
+            fn(lev||'', 138, 39, 9);
+            // Dela adressen på komma eller radbrytning
+            const levAdrParts = levAdrLev ? levAdrLev.split(/,|
+/).map(s => s.trim()).filter(Boolean) : [];
+            levAdrParts.forEach((line, i) => fn(line, 138, 44 + i * 5, 9));
 
-            // ── REFERENSRAD ─────────────────────────────────────────
-            let y = 80;
-            doc.setLineWidth(0.3); doc.line(14, y - 3, 196, y - 3);
-            doc.rect(14, y - 2, 182, 20);
-            doc.setFont('helvetica','bold'); doc.setFontSize(8);
-            doc.text('Er referens', 16, y + 3);
-            doc.text('Ert ref nr', 16, y + 9);
-            doc.text('Leveransvillkor', 16, y + 15);
-            doc.text('Leveranssätt', 80, y + 15);
-            doc.text('Vår referens', 115, y + 3);
-            doc.setFont('helvetica','normal');
-            doc.text(erRef || '', 55, y + 3);
-            doc.text(ertRefNr || '', 55, y + 9);
-            doc.text(levvillkor || '', 55, y + 15);
-            doc.text(levsatt || '', 130, y + 15);
-            doc.text(varRef || '', 150, y + 3);
-            if (projekt) { doc.setFont('helvetica','italic'); doc.text(`Projekt: ${projekt}`, 150, y + 9); }
+            // ── VÅR LEVERANSADRESS höger nedre ──────────────────────
+            fw('Vår leveransadress', 110, 58, 9);
+            const levAdressParts = levAdress ? levAdress.split(/,|
+/).map(s => s.trim()).filter(Boolean) : [];
+            levAdressParts.forEach((line, i) => fn(line, 138, 63 + i * 5, 9));
 
-            // ── ARTIKELTABELL ───────────────────────────────────────
-            y = 106;
-            doc.setFillColor(240, 240, 240);
-            doc.rect(14, y - 4, 182, 7, 'F');
-            doc.setFont('helvetica','bold'); doc.setFontSize(8);
-            doc.text('Artnr', 16, y);
-            doc.text('Benämning', 42, y);
-            doc.text('Antal', 130, y);
-            doc.text('Enh', 148, y);
-            doc.text('À-pris', 160, y);
-            doc.text('Summa', 180, y);
+            // ── REFERENSRUTA ─────────────────────────────────────────
+            // Ram: x=14, y=74, w=182, h=20
+            const refY = 74;
+            doc.rect(14, refY, 182, 20);
+            doc.line(110, refY, 110, refY + 20); // Mittlinje
+
+            fw('Er referens', 16, refY + 5, 8);    fn(erRef||'', 50, refY + 5, 8);
+            fw('Ert ref nr', 16, refY + 10, 8);    fn(ertRefNr||'', 50, refY + 10, 8);
+            fw('Leveransvillkor', 16, refY + 16, 8); fn(levvillkor||'', 50, refY + 16, 8);
+            fw('Leveranssätt', 65, refY + 16, 8);    fn(levsatt||'', 95, refY + 16, 8);
+            fw('Vår referens', 112, refY + 5, 8);   fn(varRef||'', 143, refY + 5, 8);
+            if (projekt) { fw('Projekt/Ordernr', 112, refY + 12, 8); fn(projekt, 143, refY + 12, 8); }
+
+            // ── ARTIKELTABELL ────────────────────────────────────────
+            let y = 100;
+            // Tabellhuvud med grå bakgrund
+            doc.setFillColor(235, 235, 235);
+            doc.rect(14, y - 5, 182, 7, 'F');
+            doc.setLineWidth(0.2);
+            doc.line(14, y - 5, 196, y - 5);
             doc.line(14, y + 2, 196, y + 2);
+            fw('Artnr', 16, y, 8);
+            fw('Benämning', 38, y, 8);
+            fw('Antal', 128, y, 8);
+            fw('Enh', 145, y, 8);
+            fw('À-pris', 158, y, 8);
+            fw('Summa', 178, y, 8);
 
             doc.setFont('helvetica','normal'); doc.setFontSize(9);
-            let total = 0;
-            artiklar.forEach(a => {
-                y += 8;
-                if (y > 252) { doc.addPage(); y = 20; }
+            artiklar.forEach((a, idx) => {
+                y += 9;
+                if (y > 255) { doc.addPage(); y = 20; }
                 const antal = parseFloat(a.bestalt_antal) || 0;
                 const apris = parseFloat(a.apris) || 0;
                 const summa = antal * apris;
-                total += summa;
-                doc.text(String(a.artikelnr||''), 16, y);
-                doc.text(String(a.beskrivning||'').substring(0,40), 42, y);
-                if (a.markning) { doc.setFontSize(7); doc.setTextColor(100); doc.text('Märkning: '+a.markning, 42, y+4); doc.setFontSize(9); doc.setTextColor(0); y += 2; }
-                doc.text(String(antal||''), 130, y);
-                doc.text(String(a.enhet||'m'), 148, y);
-                if (apris) doc.text(apris.toFixed(2), 160, y);
-                if (summa) doc.text(summa.toFixed(2), 180, y);
+                fn(a.artikelnr||'', 16, y, 9);
+                fn((a.beskrivning||'').substring(0,42), 38, y, 9);
+                if (a.markning) { fi('Märkning: '+a.markning, 38, y+4, 7); y += 2; }
+                fn(antal ? String(antal) : '', 128, y, 9);
+                fn(a.enhet||'m', 145, y, 9);
+                if (apris) fn(apris.toFixed(2), 158, y, 9);
+                if (summa) fn(summa.toFixed(2), 178, y, 9);
+                // Tunn separator
+                doc.setLineWidth(0.1); doc.line(14, y+3, 196, y+3);
             });
 
-            // Totalt
-            y += 8;
-            doc.setLineWidth(0.3); doc.line(14, y, 196, y);
-            y += 6;
-            doc.setFont('helvetica','bold'); doc.setFontSize(10);
-            doc.text('Totalt', 155, y);
-            doc.text(total.toFixed(2), 196, y, { align: 'right' });
+            // ── TOTALT ───────────────────────────────────────────────
+            y += 10;
+            doc.setLineWidth(0.4); doc.line(14, y - 4, 196, y - 4);
+            fw('Totalt', 148, y, 10);
+            fw(totalSEK > 0 ? totalSEK.toFixed(2) : '0,00', 190, y, 10);
+            doc.setFont('helvetica','normal');
 
             // Anteckningar
-            if (ant) { y += 10; doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.text('Not: ' + ant, 14, y); }
+            if (ant) { y += 10; fi('Not: ' + ant, 16, y, 8); }
 
-            // ── SIDFOT ──────────────────────────────────────────────
-            const pageH = doc.internal.pageSize.height;
-            doc.setLineWidth(0.3); doc.line(14, pageH - 28, 196, pageH - 28);
-            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80);
-            doc.text('Tel: 08-712 65 63', 14, pageH - 22);
-            doc.text('info@ribegardin.se', 14, pageH - 17);
-            doc.text('www.ribegardin.se', 14, pageH - 12);
-            doc.text('Bankgiro: 675-8940', 80, pageH - 22);
-            doc.text('VAT-nr: SE556322778301', 80, pageH - 17);
-            doc.text('Organisationsnr: 556322-7783', 80, pageH - 12);
-            doc.text('Godkänd för F-skatt', 80, pageH - 7);
+            // ── SIDFOT ───────────────────────────────────────────────
+            const pH = doc.internal.pageSize.height;
+            doc.setLineWidth(0.3); doc.line(14, pH - 30, 196, pH - 30);
+            doc.setFontSize(8); doc.setTextColor(60);
+            fn('Tel: 08-712 65 63', 14, pH - 24, 8);
+            fn('info@ribegardin.se', 14, pH - 19, 8);
+            fn('www.ribegardin.se', 14, pH - 14, 8);
+            fn('Bankgiro: 675-8940', 80, pH - 24, 8);
+            fn('VAT-nr: SE556322778301', 80, pH - 19, 8);
+            fn('Organisationsnr: 556322-7783', 80, pH - 14, 8);
+            fn('Godkänd för F-skatt', 80, pH - 9, 8);
             doc.setTextColor(0);
 
             doc.save(`bestellning_${ordernr}.pdf`);
