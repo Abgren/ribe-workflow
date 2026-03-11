@@ -1948,7 +1948,14 @@
                     <label class="form-label">Leveransdatum</label>
                     <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
                 </div>
-                
+
+                <div class="form-section">
+                    <h6 class="form-section-title" style="color: var(--color-som-primary, #5e35b1); margin-bottom: 0.5rem;">
+                        <i class="bi bi-scissors"></i> Sömnadsmoduler
+                    </h6>
+                    <div id="som-moduler-container"></div>
+                </div>
+
                 <div class="form-section">
                     <h6 class="form-section-title" style="color: var(--theme-primary);">Status</h6>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -1977,6 +1984,10 @@
             `;
             document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
 
+            // Init sömnadsmoduler
+            window._somModuler = JSON.parse(JSON.stringify(jobData.moduler || []));
+            renderSomModuler();
+
             // Setup status pill listeners
             document.querySelectorAll('[data-som-status]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -1991,6 +2002,76 @@
             });
 
             openDrawer();
+        }
+
+        // ── Sömnadsmoduler (tyg-moduler) ──────────────────────────────
+        window._somModuler = [];
+        const _somCols  = ['Märkning','Antal','Vad','FB','FH','Övrigt','Klippt','Klar','Saknas'];
+        const _somFields = ['markning','antal','vad','fb','fh','ovrigt','klippt','klar','saknas'];
+        const _somChk   = new Set(['klippt','klar','saknas']);
+        const _emptyRad = () => ({ markning:'', antal:'', vad:'', fb:'', fh:'', ovrigt:'', klippt:false, klar:false, saknas:false });
+
+        function renderSomModuler() {
+            const ct = document.getElementById('som-moduler-container');
+            if (!ct) return;
+            let h = window._somModuler.map((m, mi) => `
+            <div style="border:1px solid #b8d4b8;border-radius:8px;margin-bottom:0.75rem;overflow:hidden;">
+                <div style="background:#e8f4e8;padding:0.45rem 0.7rem;display:flex;gap:0.5rem;align-items:center;">
+                    <span style="font-weight:700;white-space:nowrap;color:#2d6a2d;">Tyg:</span>
+                    <input type="text" class="form-control form-control-sm" placeholder="Tyg / färg" value="${m.tyg||''}"
+                        oninput="window._somModuler[${mi}].tyg=this.value" style="flex:2;">
+                    <input type="text" class="form-control form-control-sm" placeholder="Leverantör" value="${m.leverantor||''}"
+                        oninput="window._somModuler[${mi}].leverantor=this.value" style="flex:1;">
+                    <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeSomModul(${mi})" title="Ta bort tyg"><i class="bi bi-trash"></i></button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="table table-sm table-bordered mb-0" style="min-width:660px;font-size:0.78rem;">
+                        <thead style="background:#f4f8f4;">
+                            <tr>
+                                ${_somCols.map((c,ci)=>`<th style="white-space:nowrap;${_somChk.has(_somFields[ci])?'width:50px;text-align:center':''}">${c}</th>`).join('')}
+                                <th style="width:28px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${m.rader.map((r,ri)=>`
+                            <tr>
+                                ${_somFields.map(f => _somChk.has(f)
+                                    ? `<td style="text-align:center;vertical-align:middle;"><input type="checkbox" ${r[f]?'checked':''} onchange="window._somModuler[${mi}].rader[${ri}].${f}=this.checked" style="width:16px;height:16px;cursor:pointer;"></td>`
+                                    : `<td style="padding:2px 4px;"><input type="text" class="form-control form-control-sm" value="${(r[f]||'').toString().replace(/"/g,'&quot;')}" oninput="window._somModuler[${mi}].rader[${ri}].${f}=this.value" style="min-width:${f==='markning'?90:f==='ovrigt'?110:50}px;"></td>`
+                                ).join('')}
+                                <td style="text-align:center;vertical-align:middle;">
+                                    <button class="btn btn-sm btn-link text-danger p-0" onclick="removeSomModulRad(${mi},${ri})" title="Ta bort rad">×</button>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:0.4rem 0.7rem;background:#f9fdf9;">
+                    <button class="btn btn-sm btn-outline-secondary py-0" onclick="addSomModulRad(${mi})">
+                        <i class="bi bi-plus"></i> Lägg till rad
+                    </button>
+                </div>
+            </div>`).join('');
+            h += `<button class="btn btn-sm btn-outline-success" onclick="addSomModul()"><i class="bi bi-plus-circle"></i> Lägg till tyg</button>`;
+            ct.innerHTML = h;
+        }
+
+        function addSomModul() {
+            window._somModuler.push({ tyg:'', leverantor:'', rader:[_emptyRad()] });
+            renderSomModuler();
+        }
+        function removeSomModul(i) {
+            window._somModuler.splice(i,1);
+            renderSomModuler();
+        }
+        function addSomModulRad(mi) {
+            window._somModuler[mi].rader.push(_emptyRad());
+            renderSomModuler();
+        }
+        function removeSomModulRad(mi, ri) {
+            if (window._somModuler[mi].rader.length > 1)
+                window._somModuler[mi].rader.splice(ri,1);
+            renderSomModuler();
         }
 
         async function deleteSomJobFromDrawer(id) {
@@ -2012,6 +2093,7 @@
                 saljare: document.getElementById('som_saljare').value,
                 leveransdatum: document.getElementById('som_leveransdatum').value,
                 anteckningar: document.getElementById('som_anteckningar').value,
+                moduler: JSON.parse(JSON.stringify(window._somModuler || [])),
                 status
             };
 
