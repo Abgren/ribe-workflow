@@ -1918,29 +1918,35 @@
                 status: 'utkast',
                 leveransdatum: formatDate(new Date())
             };
-            
+
             document.getElementById('jobModalTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr}`;
-            
+
+            const selSaljare = ['','Danne','Tina','Tess','Anders','Rita/Linda']
+                .map(n => `<option value="${n}" ${jobData.saljare === n ? 'selected' : ''}>${n || '— Välj säljare —'}</option>`).join('');
+
             let formHtml = `
-                <div class="form-section">
-                    <label class="form-label">Fortnox Ordernr</label>
-                    <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" placeholder="Ange Fortnox ordernummer">
-                </div>
-                
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-section">
-                        <label class="form-label">Leveransdatum</label>
-                        <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
+                        <label class="form-label fw-semibold">Ordernummer</label>
+                        <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" placeholder="Fortnox ordernr">
                     </div>
                     <div class="form-section">
-                        <label class="form-label">Kund</label>
+                        <label class="form-label fw-semibold">Kundnamn</label>
                         <input type="text" class="form-control som-field" id="som_kund" value="${jobData.kund || ''}" placeholder="Kundnamn">
                     </div>
+                    <div class="form-section">
+                        <label class="form-label fw-semibold">Projekt</label>
+                        <input type="text" class="form-control som-field" id="som_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label fw-semibold">Säljare</label>
+                        <select class="form-select" id="som_saljare">${selSaljare}</select>
+                    </div>
                 </div>
-                
+
                 <div class="form-section">
-                    <label class="form-label">Projekt</label>
-                    <input type="text" class="form-control som-field" id="som_projekt" value="${jobData.projekt || ''}" placeholder="Projektnamn">
+                    <label class="form-label">Leveransdatum</label>
+                    <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
                 </div>
                 
                 <div class="form-section">
@@ -2001,9 +2007,10 @@
             const jobData = {
                 id: currentEditingJobId || ('som_' + Date.now().toString(36) + Math.random().toString(36).slice(2)),
                 ordernr: document.getElementById('som_ordernr').value,
-                leveransdatum: document.getElementById('som_leveransdatum').value,
                 kund: document.getElementById('som_kund').value,
                 projekt: document.getElementById('som_projekt').value,
+                saljare: document.getElementById('som_saljare').value,
+                leveransdatum: document.getElementById('som_leveransdatum').value,
                 anteckningar: document.getElementById('som_anteckningar').value,
                 status
             };
@@ -2027,6 +2034,7 @@
                     right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
                 },
                 locale: 'sv',
+                editable: true,
                 events: [],
                 eventClick: async (info) => {
                     const jobs = await loadOrders('som');
@@ -2036,8 +2044,26 @@
                         showSomJobModal(job);
                     }
                 },
+                eventDrop: async (info) => {
+                    const jobs = await loadOrders('som');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (!job) { info.revert(); return; }
+                    job.leveransdatum = info.event.startStr.split('T')[0];
+                    await saveOrder('som', job);
+                    showToast(`Flyttad till ${job.leveransdatum}`);
+                    await loadAndRenderSomJobs();
+                },
+                eventResize: async (info) => {
+                    const jobs = await loadOrders('som');
+                    const job = jobs.find(j => j.id === info.event.id);
+                    if (!job) { info.revert(); return; }
+                    job.leveransdatum = info.event.endStr ? info.event.endStr.split('T')[0] : info.event.startStr.split('T')[0];
+                    await saveOrder('som', job);
+                    showToast(`Uppdaterat leveransdatum`);
+                    await loadAndRenderSomJobs();
+                },
                 eventDidMount: (info) => {
-                    info.el.style.cursor = 'pointer';
+                    info.el.style.cursor = 'grab';
                 }
             });
             somCalendar.render();
