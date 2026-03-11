@@ -966,81 +966,116 @@
                 
                 <div class="modal-body">
                     <!-- Ordernr & Datum -->
-                    <div class="form-section">
-                        <label class="form-label">Ordernr</label>
-                        <input type="text" class="form-control" id="bestOrdernr" readonly style="background: #f0f0f0;">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Beställningsdatum <small style="color:#999;">(sätts automatiskt vid PDF-utskick)</small></label>
+                            <label class="form-label">Beställningsnr</label>
+                            <input type="text" class="form-control" id="bestOrdernr" readonly style="background:#f0f0f0;">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Beställningsdatum <small style="color:#999;">(auto vid PDF)</small></label>
                             <input type="date" class="form-control" id="bestDatum" style="background:#f8f8f8;">
                         </div>
                         <div class="form-section">
-                            <label class="form-label">Leveransdatum</label>
+                            <label class="form-label">Leveranstid</label>
                             <input type="date" class="form-control" id="bestLevdatum">
                         </div>
                     </div>
 
+                    <!-- Leverantör -->
+                    <h6 style="color:#6A1B9A;font-weight:600;margin:1rem 0 0.5rem;">Leverantör</h6>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Leverantör</label>
-                            <input type="text" class="form-control" id="bestLeverantor" placeholder="Företag">
+                            <label class="form-label">Företag</label>
+                            <input type="text" class="form-control" id="bestLeverantor" placeholder="Leverantörens namn">
                         </div>
                         <div class="form-section">
-                            <label class="form-label">Vår referens</label>
-                            <select class="form-control" id="bestReferens"></select>
+                            <label class="form-label">Vårt kundnr hos leverantören</label>
+                            <input type="text" class="form-control" id="bestKundnr" placeholder="t.ex. 1114">
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Leverantörens adress</label>
+                        <input type="text" class="form-control" id="bestLevAdressLev" placeholder="Gatuadress, postnr ort">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-section">
+                            <label class="form-label">Er referens (leverantörens kontakt)</label>
+                            <input type="text" class="form-control" id="bestErReferens" placeholder="Kontaktperson hos leverantören">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Ert ref nr</label>
+                            <input type="text" class="form-control" id="bestErtRefNr" placeholder="Leverantörens referensnr">
                         </div>
                     </div>
 
+                    <!-- Vår info -->
+                    <h6 style="color:#6A1B9A;font-weight:600;margin:1rem 0 0.5rem;">Vår information</h6>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Projekt/Märkning</label>
-                            <input type="text" class="form-control" id="bestProjekt" placeholder="Projekt">
+                            <label class="form-label">Säljare / Vår referens</label>
+                            <select class="form-control" id="bestReferens"></select>
                         </div>
+                        <div class="form-section">
+                            <label class="form-label">Projekt/Ordernr</label>
+                            <input type="text" class="form-control" id="bestProjekt" placeholder="Projekt eller ordernr">
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Vår leveransadress</label>
+                        <input type="text" class="form-control" id="bestLevAdress" value="RiBe Gardin AB, Mediavägen 11, 135 48 Tyresö">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
                             <label class="form-label">Betalningsvillkor</label>
                             <input type="text" class="form-control" id="bestBetalning" value="30 dagar netto">
                         </div>
-                    </div>
-
-                    <div class="form-section">
-                        <label class="form-label">Leveransadress</label>
-                        <input type="text" class="form-control" id="bestLevAdress" value="Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö">
+                        <div class="form-section">
+                            <label class="form-label">Leveransvillkor</label>
+                            <input type="text" class="form-control" id="bestLevvillkor" placeholder="t.ex. DDP">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Leveranssätt</label>
+                            <input type="text" class="form-control" id="bestLevsatt" placeholder="t.ex. Frakt">
+                        </div>
                     </div>
 
                     <!-- Artiklar -->
-                    <div class="form-section">
-                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Artiklar</h6>
-                        <table class="best-artikel-table">
-                            <thead>
-                                <tr>
-                                    <th>Artikelnr</th>
-                                    <th>Beskrivning</th>
-                                    <th>Märkning</th>
-                                    <th style="width:80px;">Beställt antal</th>
-                                    <th style="width:80px;">Levererat antal</th>
-                                    <th style="width:70px;">Enhet</th>
-                                    <th style="width:70px;">Levererad</th>
-                                    <th style="width:40px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="bestArtiklarBody"></tbody>
-                        </table>
-                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addBestArtikelBtn">
+                    <h6 style="color:#6A1B9A;font-weight:600;margin:1rem 0 0.5rem;">Artiklar</h6>
+                    <div style="overflow-x:auto;">
+                    <table class="best-artikel-table" style="min-width:700px;">
+                        <thead>
+                            <tr>
+                                <th>Artikelnr</th>
+                                <th>Beskrivning / Märkning</th>
+                                <th style="width:70px;">Antal</th>
+                                <th style="width:60px;">Enh</th>
+                                <th style="width:90px;">À-pris</th>
+                                <th style="width:90px;">Summa</th>
+                                <th style="width:60px;">Lev.</th>
+                                <th style="width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bestArtiklarBody"></tbody>
+                    </table>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="addBestArtikelBtn">
                             <i class="bi bi-plus"></i> Lägg till artikel
                         </button>
+                        <div style="font-weight:600;font-size:1rem;">
+                            Totalt: <span id="bestTotalt" style="color:#6A1B9A;">0,00 SEK</span>
+                        </div>
                     </div>
 
                     <!-- Anteckningar -->
-                    <div class="form-section">
-                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Anteckningar</h6>
-                        <textarea class="form-control" id="bestAnteckningar" rows="3" placeholder="Ev. noteringar..."></textarea>
+                    <div class="form-section" style="margin-top:1rem;">
+                        <label class="form-label" style="font-weight:600;color:#6A1B9A;">Anteckningar</label>
+                        <textarea class="form-control" id="bestAnteckningar" rows="2" placeholder="Ev. noteringar..."></textarea>
                     </div>
 
                     <!-- Status -->
                     <div class="form-section">
-                        <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Status</h6>
+                        <h6 style="color:#6A1B9A;font-weight:600;margin-bottom:0.5rem;">Status</h6>
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="bestStatusPills">
                             <button type="button" class="status-pill active" data-best-status="oppen"
                                 style="background:#FFB74D;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Öppen</button>
@@ -1055,7 +1090,7 @@
                         </div>
                         <div class="mt-3">
                             <label class="form-label" style="font-weight:500;">Mottagen (datum)</label>
-                            <input type="date" class="form-control" id="bestMottagen" placeholder="Ange datum om leverans mottagits">
+                            <input type="date" class="form-control" id="bestMottagen">
                         </div>
                     </div>
                 </div>
@@ -2063,15 +2098,21 @@
                 msSalesNames.map(n => `<option value="${n}" ${b && b.referens === n ? 'selected' : ''}>${n}</option>`).join('');
 
             document.getElementById('bestModalTitle').textContent = b ? `Beställning ${b.ordernr}` : 'Ny beställning';
-            document.getElementById('bestOrdernr').value   = b ? b.ordernr   : await generateBestOrdernr();
-            document.getElementById('bestDatum').value     = b ? b.datum     : formatDate(new Date());
-            document.getElementById('bestLevdatum').value  = b ? b.levdatum  : '';
-            document.getElementById('bestLeverantor').value= b ? b.leverantor: '';
-            document.getElementById('bestProjekt').value   = b ? b.projekt   : '';
-            document.getElementById('bestBetalning').value = b ? b.betalning  : '30 dagar netto';
-            document.getElementById('bestLevAdress').value = b ? b.levadress  : 'Ribe Gardin AB, Mediavägen 11, 135 48 Tyresö';
+            document.getElementById('bestOrdernr').value      = b ? b.ordernr    : await generateBestOrdernr();
+            document.getElementById('bestDatum').value        = b ? b.datum      : '';
+            document.getElementById('bestLevdatum').value     = b ? b.levdatum   : '';
+            document.getElementById('bestLeverantor').value   = b ? b.leverantor : '';
+            document.getElementById('bestKundnr').value       = b ? (b.kundnr || '')       : '';
+            document.getElementById('bestLevAdressLev').value = b ? (b.levadressLev || '') : '';
+            document.getElementById('bestErReferens').value   = b ? (b.erReferens || '')   : '';
+            document.getElementById('bestErtRefNr').value     = b ? (b.ertRefNr || '')     : '';
+            document.getElementById('bestProjekt').value      = b ? b.projekt    : '';
+            document.getElementById('bestBetalning').value    = b ? b.betalning  : '30 dagar netto';
+            document.getElementById('bestLevvillkor').value   = b ? (b.levvillkor || '') : '';
+            document.getElementById('bestLevsatt').value      = b ? (b.levsatt || '')    : '';
+            document.getElementById('bestLevAdress').value    = b ? b.levadress  : 'RiBe Gardin AB, Mediavägen 11, 135 48 Tyresö';
             document.getElementById('bestAnteckningar').value = b ? b.anteckningar : '';
-            document.getElementById('bestMottagen').value   = b ? (b.mottagen || '') : '';
+            document.getElementById('bestMottagen').value     = b ? (b.mottagen || '') : '';
 
             renderBestArtiklar(b ? b.artiklar : []);
 
@@ -2091,21 +2132,42 @@
         function renderBestArtiklar(artiklar) {
             const tbody = document.getElementById('bestArtiklarBody');
             const rows = (artiklar && artiklar.length > 0 ? artiklar : [{ artikelnr: '', beskrivning: '', markning: '', bestalt_antal: '', levererat_antal: '', enhet: 'm', levererad: false }]);
-            tbody.innerHTML = rows.map((a, i) => `
-                <tr style="${a.levererad ? 'background:#e8f5e9;text-decoration:line-through;opacity:0.7;' : ''}">
-                    <td><input type="text" value="${a.artikelnr || ''}" placeholder="Artikelnr" data-best-field="artikelnr" data-idx="${i}"></td>
-                    <td><input type="text" value="${a.beskrivning || ''}" placeholder="Beskrivning" data-best-field="beskrivning" data-idx="${i}"></td>
-                    <td><input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}"></td>
-                    <td><input type="number" value="${a.bestalt_antal || ''}" placeholder="0" data-best-field="bestalt_antal" data-idx="${i}"></td>
-                    <td><input type="number" value="${a.levererat_antal || ''}" placeholder="0" data-best-field="levererat_antal" data-idx="${i}"></td>
-                    <td><input type="text" value="${a.enhet || 'm'}" placeholder="enhet" data-best-field="enhet" data-idx="${i}"></td>
+            tbody.innerHTML = rows.map((a, i) => {
+                const apris = parseFloat(a.apris) || 0;
+                const antal = parseFloat(a.bestalt_antal) || 0;
+                const summa = apris * antal;
+                return `
+                <tr style="${a.levererad ? 'background:#e8f5e9;opacity:0.7;' : ''}">
+                    <td><input type="text" value="${a.artikelnr || ''}" placeholder="Artikelnr" data-best-field="artikelnr" data-idx="${i}" style="width:80px;"></td>
+                    <td>
+                        <input type="text" value="${a.beskrivning || ''}" placeholder="Beskrivning" data-best-field="beskrivning" data-idx="${i}" style="width:100%;margin-bottom:3px;">
+                        <input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}" style="width:100%;font-size:0.82em;color:#666;">
+                    </td>
+                    <td><input type="number" value="${a.bestalt_antal || ''}" placeholder="0" data-best-field="bestalt_antal" data-idx="${i}" oninput="updateBestTotalt()" style="width:65px;"></td>
+                    <td><input type="text" value="${a.enhet || 'm'}" placeholder="enh" data-best-field="enhet" data-idx="${i}" style="width:50px;"></td>
+                    <td><input type="number" value="${a.apris || ''}" placeholder="0,00" step="0.01" data-best-field="apris" data-idx="${i}" oninput="updateBestTotalt()" style="width:80px;"></td>
+                    <td style="text-align:right;padding-right:8px;font-weight:500;">${summa > 0 ? summa.toFixed(2) : '-'}</td>
                     <td style="text-align:center;vertical-align:middle;">
                         <input type="checkbox" class="form-check-input" ${a.levererad ? 'checked' : ''}
                             onchange="toggleArtikelLevererad(${i}, this.checked)"
-                            title="Markera som levererad" style="width:20px;height:20px;cursor:pointer;">
+                            title="Levererad" style="width:18px;height:18px;cursor:pointer;">
                     </td>
                     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBestArtikel(${i})"><i class="bi bi-x"></i></button></td>
-                </tr>`).join('');
+                </tr>`;
+            }).join('');
+            updateBestTotalt();
+        }
+
+        function updateBestTotalt() {
+            const rows = document.querySelectorAll('#bestArtiklarBody tr');
+            let total = 0;
+            rows.forEach(row => {
+                const antal = parseFloat(row.querySelector('[data-best-field="bestalt_antal"]')?.value) || 0;
+                const apris = parseFloat(row.querySelector('[data-best-field="apris"]')?.value) || 0;
+                total += antal * apris;
+            });
+            const el = document.getElementById('bestTotalt');
+            if (el) el.textContent = total.toFixed(2).replace('.', ',') + ' SEK';
         }
 
         function toggleArtikelLevererad(idx, checked) {
@@ -2123,13 +2185,13 @@
         function getBestArtiklarFromForm() {
             const rows = document.querySelectorAll('#bestArtiklarBody tr');
             return Array.from(rows).map(row => ({
-                artikelnr:       row.querySelector('[data-best-field="artikelnr"]')?.value       || '',
-                beskrivning:     row.querySelector('[data-best-field="beskrivning"]')?.value     || '',
-                markning:        row.querySelector('[data-best-field="markning"]')?.value        || '',
-                bestalt_antal:   row.querySelector('[data-best-field="bestalt_antal"]')?.value   || '',
-                levererat_antal: row.querySelector('[data-best-field="levererat_antal"]')?.value || '',
-                enhet:           row.querySelector('[data-best-field="enhet"]')?.value           || 'm',
-                levererad:       row.querySelector('input[type="checkbox"]')?.checked            || false
+                artikelnr:     row.querySelector('[data-best-field="artikelnr"]')?.value     || '',
+                beskrivning:   row.querySelector('[data-best-field="beskrivning"]')?.value   || '',
+                markning:      row.querySelector('[data-best-field="markning"]')?.value      || '',
+                bestalt_antal: row.querySelector('[data-best-field="bestalt_antal"]')?.value || '',
+                enhet:         row.querySelector('[data-best-field="enhet"]')?.value         || 'm',
+                apris:         row.querySelector('[data-best-field="apris"]')?.value         || '',
+                levererad:     row.querySelector('input[type="checkbox"]')?.checked          || false
             }));
         }
         
@@ -2143,9 +2205,15 @@
                 datum:        document.getElementById('bestDatum').value,
                 levdatum:     document.getElementById('bestLevdatum').value,
                 leverantor:   document.getElementById('bestLeverantor').value,
+                kundnr:       document.getElementById('bestKundnr').value,
+                levadressLev: document.getElementById('bestLevAdressLev').value,
+                erReferens:   document.getElementById('bestErReferens').value,
+                ertRefNr:     document.getElementById('bestErtRefNr').value,
                 referens:     document.getElementById('bestReferens').value,
                 projekt:      document.getElementById('bestProjekt').value,
                 betalning:    document.getElementById('bestBetalning').value,
+                levvillkor:   document.getElementById('bestLevvillkor').value,
+                levsatt:      document.getElementById('bestLevsatt').value,
                 levadress:    document.getElementById('bestLevAdress').value,
                 anteckningar: document.getElementById('bestAnteckningar').value,
                 mottagen:     document.getElementById('bestMottagen').value || '',
@@ -2162,59 +2230,157 @@
         }
         
         async function generateAndSendBestPdf() {
-            // Sätt datum till idag om det saknas
+            // Auto-sätt datum om saknas
             const datumFalt = document.getElementById('bestDatum');
-            if (!datumFalt.value) {
-                datumFalt.value = formatDate(new Date());
-            }
-            // Byt status till "skickad"
-            document.querySelectorAll('#bestStatusPills .status-pill').forEach(p => {
-                p.style.background = '#eee'; p.style.color = '#333';
-            });
-            const skickadPill = document.querySelector('#bestStatusPills .status-pill[data-best-status="skickad"]');
-            if (skickadPill) {
-                skickadPill.style.background = getPillColor('skickad');
-                skickadPill.style.color = 'white';
-            }
-            // Generera PDF med jsPDF
+            if (!datumFalt.value) datumFalt.value = formatDate(new Date());
+
+            // Byt status till skickad
+            document.querySelectorAll('#bestStatusPills .status-pill').forEach(p => { p.style.background='#eee'; p.style.color='#333'; });
+            const sp = document.querySelector('#bestStatusPills .status-pill[data-best-status="skickad"]');
+            if (sp) { sp.style.background = getPillColor('skickad'); sp.style.color = 'white'; }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const ordernr  = document.getElementById('bestOrdernr').value;
-            const datum    = document.getElementById('bestDatum').value;
-            const lev      = document.getElementById('bestLeverantor').value;
-            const levdatum = document.getElementById('bestLevdatum').value;
-            const projekt  = document.getElementById('bestProjekt').value;
-            const adress   = document.getElementById('bestLevAdress').value;
-            const ant      = document.getElementById('bestAnteckningar').value;
-            doc.setFontSize(18); doc.setFont('helvetica','bold');
-            doc.text('BESTÄLLNING', 105, 20, {align:'center'});
-            doc.setFontSize(10); doc.setFont('helvetica','normal');
-            doc.text(`Beställningsnr: ${ordernr}`, 14, 35);
-            doc.text(`Datum: ${datum}`, 14, 42);
-            doc.text(`Leverantör: ${lev}`, 14, 49);
-            if (levdatum) doc.text(`Önskat leveransdatum: ${levdatum}`, 14, 56);
-            if (projekt)  doc.text(`Projekt/Ordernr: ${projekt}`, 14, 63);
-            doc.text(`Leveransadress: ${adress}`, 14, 70);
-            doc.setLineWidth(0.3); doc.line(14, 76, 196, 76);
-            // Artikelrad-rubrik
-            let y = 82;
+
+            // Hämta alla fält
+            const ordernr    = document.getElementById('bestOrdernr').value;
+            const datum      = document.getElementById('bestDatum').value;
+            const levdatum   = document.getElementById('bestLevdatum').value;
+            const lev        = document.getElementById('bestLeverantor').value;
+            const kundnr     = document.getElementById('bestKundnr').value;
+            const levAdrLev  = document.getElementById('bestLevAdressLev').value;
+            const erRef      = document.getElementById('bestErReferens').value;
+            const ertRefNr   = document.getElementById('bestErtRefNr').value;
+            const varRef     = document.getElementById('bestReferens').value;
+            const projekt    = document.getElementById('bestProjekt').value;
+            const betalning  = document.getElementById('bestBetalning').value;
+            const levvillkor = document.getElementById('bestLevvillkor').value;
+            const levsatt    = document.getElementById('bestLevsatt').value;
+            const levAdress  = document.getElementById('bestLevAdress').value;
+            const ant        = document.getElementById('bestAnteckningar').value;
+            const artiklar   = getBestArtiklarFromForm();
+
+            // ── HEADER ──────────────────────────────────────────────
             doc.setFont('helvetica','bold');
-            doc.text('Artikelnr', 14, y); doc.text('Beskrivning', 45, y);
-            doc.text('Märkning', 115, y); doc.text('Antal', 155, y); doc.text('Enhet', 175, y);
+            doc.setFontSize(20);
+            doc.text('Ribe Gardin AB', 14, 18);
             doc.setFont('helvetica','normal');
-            const artiklar = getBestArtiklarFromForm();
-            artiklar.forEach(a => {
-                y += 7;
-                if (y > 270) { doc.addPage(); y = 20; }
-                doc.text(String(a.artikelnr||''), 14, y);
-                doc.text(String(a.beskrivning||'').substring(0,35), 45, y);
-                doc.text(String(a.markning||''), 115, y);
-                doc.text(String(a.bestalt_antal||''), 155, y);
-                doc.text(String(a.enhet||'m'), 175, y);
+            doc.setFontSize(9);
+            doc.text('Box 2027', 14, 24);
+            doc.text('135 02  Tyresö', 14, 29);
+
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(16);
+            doc.text('Beställning', 196, 18, { align: 'right' });
+
+            // ── LEVERANTÖR (höger) ──────────────────────────────────
+            doc.setFont('helvetica','bold'); doc.setFontSize(9);
+            doc.text('Adress', 115, 42);
+            doc.setFont('helvetica','normal');
+            doc.text(lev || '', 145, 42);
+            const levAdrLines = levAdrLev ? levAdrLev.split(',') : [];
+            levAdrLines.forEach((line, i) => doc.text(line.trim(), 145, 47 + i * 5));
+
+            // ── INFOBOX (vänster) ───────────────────────────────────
+            doc.setLineWidth(0.3);
+            doc.rect(14, 36, 95, 38);
+            const infoRows = [
+                ['Beställningsdatum', datum],
+                ['Vårt kundnr', kundnr],
+                ['Vårt beställningsnr', ordernr],
+                ['Totalt SEK', ''],
+                ['Leveranstid', levdatum],
+                ['Betalningsvillkor', betalning],
+            ];
+            infoRows.forEach(([label, val], i) => {
+                const y = 43 + i * 5.2;
+                doc.setFont('helvetica','bold'); doc.setFontSize(8);
+                doc.text(label, 16, y);
+                doc.setFont('helvetica','normal');
+                doc.text(String(val||''), 65, y);
             });
-            if (ant) { y += 12; doc.setFont('helvetica','italic'); doc.text(`Not: ${ant}`, 14, y); }
+
+            // ── VÅR LEVERANSADRESS (höger nedre) ───────────────────
+            doc.setFont('helvetica','bold'); doc.setFontSize(9);
+            doc.text('Vår leveransadress', 115, 62);
+            doc.setFont('helvetica','normal');
+            const levAdressLines = levAdress.split(',');
+            levAdressLines.forEach((line, i) => doc.text(line.trim(), 145, 62 + i * 5));
+
+            // ── REFERENSRAD ─────────────────────────────────────────
+            let y = 80;
+            doc.setLineWidth(0.3); doc.line(14, y - 3, 196, y - 3);
+            doc.rect(14, y - 2, 182, 20);
+            doc.setFont('helvetica','bold'); doc.setFontSize(8);
+            doc.text('Er referens', 16, y + 3);
+            doc.text('Ert ref nr', 16, y + 9);
+            doc.text('Leveransvillkor', 16, y + 15);
+            doc.text('Leveranssätt', 80, y + 15);
+            doc.text('Vår referens', 115, y + 3);
+            doc.setFont('helvetica','normal');
+            doc.text(erRef || '', 55, y + 3);
+            doc.text(ertRefNr || '', 55, y + 9);
+            doc.text(levvillkor || '', 55, y + 15);
+            doc.text(levsatt || '', 130, y + 15);
+            doc.text(varRef || '', 150, y + 3);
+            if (projekt) { doc.setFont('helvetica','italic'); doc.text(`Projekt: ${projekt}`, 150, y + 9); }
+
+            // ── ARTIKELTABELL ───────────────────────────────────────
+            y = 106;
+            doc.setFillColor(240, 240, 240);
+            doc.rect(14, y - 4, 182, 7, 'F');
+            doc.setFont('helvetica','bold'); doc.setFontSize(8);
+            doc.text('Artnr', 16, y);
+            doc.text('Benämning', 42, y);
+            doc.text('Antal', 130, y);
+            doc.text('Enh', 148, y);
+            doc.text('À-pris', 160, y);
+            doc.text('Summa', 180, y);
+            doc.line(14, y + 2, 196, y + 2);
+
+            doc.setFont('helvetica','normal'); doc.setFontSize(9);
+            let total = 0;
+            artiklar.forEach(a => {
+                y += 8;
+                if (y > 252) { doc.addPage(); y = 20; }
+                const antal = parseFloat(a.bestalt_antal) || 0;
+                const apris = parseFloat(a.apris) || 0;
+                const summa = antal * apris;
+                total += summa;
+                doc.text(String(a.artikelnr||''), 16, y);
+                doc.text(String(a.beskrivning||'').substring(0,40), 42, y);
+                if (a.markning) { doc.setFontSize(7); doc.setTextColor(100); doc.text('Märkning: '+a.markning, 42, y+4); doc.setFontSize(9); doc.setTextColor(0); y += 2; }
+                doc.text(String(antal||''), 130, y);
+                doc.text(String(a.enhet||'m'), 148, y);
+                if (apris) doc.text(apris.toFixed(2), 160, y);
+                if (summa) doc.text(summa.toFixed(2), 180, y);
+            });
+
+            // Totalt
+            y += 8;
+            doc.setLineWidth(0.3); doc.line(14, y, 196, y);
+            y += 6;
+            doc.setFont('helvetica','bold'); doc.setFontSize(10);
+            doc.text('Totalt', 155, y);
+            doc.text(total.toFixed(2), 196, y, { align: 'right' });
+
+            // Anteckningar
+            if (ant) { y += 10; doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.text('Not: ' + ant, 14, y); }
+
+            // ── SIDFOT ──────────────────────────────────────────────
+            const pageH = doc.internal.pageSize.height;
+            doc.setLineWidth(0.3); doc.line(14, pageH - 28, 196, pageH - 28);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80);
+            doc.text('Tel: 08-712 65 63', 14, pageH - 22);
+            doc.text('info@ribegardin.se', 14, pageH - 17);
+            doc.text('www.ribegardin.se', 14, pageH - 12);
+            doc.text('Bankgiro: 675-8940', 80, pageH - 22);
+            doc.text('VAT-nr: SE556322778301', 80, pageH - 17);
+            doc.text('Organisationsnr: 556322-7783', 80, pageH - 12);
+            doc.text('Godkänd för F-skatt', 80, pageH - 7);
+            doc.setTextColor(0);
+
             doc.save(`bestellning_${ordernr}.pdf`);
-            // Spara ordern med uppdaterat datum + status skickad
             await saveBestOrder();
             showToast('PDF genererad — status satt till Skickad');
         }
