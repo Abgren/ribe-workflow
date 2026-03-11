@@ -28,6 +28,9 @@
     <!-- MSAL Browser 2.x (Microsofts officiella CDN) -->
     <script src="https://alcdn.msauth.net/browser/2.38.4/js/msal-browser.min.js"></script>
 
+    <!-- Supabase för delad databas -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- jsPDF för PDF-generering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -1256,33 +1259,57 @@
         // API FUNCTIONS
         // ============================================================================
         
-        // ── TESTLÄGE: Använder localStorage istället för API ─────────────────────
-        function lsKey(type) { return `ribe_test_${type}`; }
+        // ── SUPABASE DELAD DATABAS ────────────────────────────────────────────────
+        const SUPABASE_URL = 'https://xzlbrdrqzlyycjvkvupl.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6bGJyZHJxemx5eWNqdmt2dXBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjM3NDIsImV4cCI6MjA4ODc5OTc0Mn0.xZfo-R33ut6LQsgHnMP8VkPa1ktvPbr9_kIj6ta2AVE';
+        const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function apiCall() { return null; }
 
         async function loadOrders(type) {
-            const data = localStorage.getItem(lsKey(type));
-            return data ? JSON.parse(data) : [];
+            const { data, error } = await _sb
+                .from('orders')
+                .select('id, data, status, created_at')
+                .eq('type', type)
+                .order('created_at', { ascending: true });
+            if (error) { console.error('Supabase load error:', error); return []; }
+            return (data || []).map(row => ({ ...row.data, id: row.id, status: row.status }));
         }
 
         async function saveOrder(type, order) {
-            const orders = await loadOrders(type);
             if (!order.id) {
-                order.id = Date.now().toString();
-                orders.push(order);
-            } else {
-                const idx = orders.findIndex(o => o.id === order.id);
-                if (idx >= 0) orders[idx] = order; else orders.push(order);
+                order.id = type + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
             }
-            localStorage.setItem(lsKey(type), JSON.stringify(orders));
-            return order;
+            const { data, error } = await _sb
+                .from('orders')
+                .upsert(
+                    { id: order.id, type, data: order, status: order.status || null, updated_at: new Date().toISOString() },
+                    { onConflict: 'id' }
+                )
+                .select()
+                .single();
+            if (error) { console.error('Supabase save error:', error); return null; }
+            return { ...data.data, id: data.id, status: data.status };
         }
 
         async function deleteOrder(type, id) {
-            const orders = await loadOrders(type);
-            localStorage.setItem(lsKey(type), JSON.stringify(orders.filter(o => o.id !== id)));
+            const { error } = await _sb.from('orders').delete().eq('id', id);
+            if (error) { console.error('Supabase delete error:', error); return false; }
             return true;
+        }
+
+        function setupRealtimeSync() {
+            _sb.channel('ribe-sync')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+                    const t = payload.new?.type || payload.old?.type;
+                    // Uppdatera bara om ingen modal är öppen just nu
+                    const modalOpen = document.querySelector('.modal.show') || document.getElementById('mainDrawer')?.classList.contains('open');
+                    if (modalOpen) return;
+                    if (t === 'ar') loadAndRenderArJobs();
+                    else if (t === 'som') loadAndRenderSomJobs();
+                    else if (t === 'best') renderBestTable();
+                })
+                .subscribe();
         }
         
         async function syncFortnox() {
@@ -1356,14 +1383,15 @@
         // ============================================================================
 
         async function initializeApp() {
-            // Testläge: inga settings från API
-
-            // Initiera kalender direkt
+            // Initiera kalender
             if (!arCalendar) initArCalendar();
 
-            // Load initial data for AR tab
+            // Starta real-time synk mot Supabase
+            setupRealtimeSync();
+
+            // Ladda initial data för AR-fliken
             await loadAndRenderArJobs();
-            
+
             // Setup event listeners
             setupEventListeners();
         }
