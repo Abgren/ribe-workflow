@@ -972,8 +972,8 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-section">
-                            <label class="form-label">Beställningsdatum</label>
-                            <input type="date" class="form-control" id="bestDatum">
+                            <label class="form-label">Beställningsdatum <small style="color:#999;">(sätts automatiskt vid PDF-utskick)</small></label>
+                            <input type="date" class="form-control" id="bestDatum" style="background:#f8f8f8;">
                         </div>
                         <div class="form-section">
                             <label class="form-label">Leveransdatum</label>
@@ -1042,7 +1042,9 @@
                         <h6 style="color: #6A1B9A; font-weight: 600; margin-bottom: 0.75rem;">Status</h6>
                         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="bestStatusPills">
                             <button type="button" class="status-pill active" data-best-status="oppen"
-                                style="background:#F57C00;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Öppen</button>
+                                style="background:#FFB74D;color:white;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Öppen</button>
+                            <button type="button" class="status-pill" data-best-status="skickad"
+                                style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Skickad</button>
                             <button type="button" class="status-pill" data-best-status="dellevererad"
                                 style="background:#eee;color:#333;padding:0.35rem 0.9rem;border-radius:20px;border:none;cursor:pointer;font-weight:500;">Dellevererad</button>
                             <button type="button" class="status-pill" data-best-status="levererad"
@@ -1204,10 +1206,14 @@
             return `${prefix}-${year}-${timestamp}`;
         }
         
-        function generateBestOrdernr() {
-            const year = new Date().getFullYear();
-            const timestamp = Date.now().toString(36);
-            return `BEST-${year}-${timestamp}`;
+        async function generateBestOrdernr() {
+            const orders = await loadOrders('best');
+            if (!orders || orders.length === 0) return '6000';
+            const maxNr = orders.reduce((max, b) => {
+                const n = parseInt(b.ordernr);
+                return (!isNaN(n) && n > max) ? n : max;
+            }, 5999);
+            return String(maxNr + 1);
         }
         
         // ============================================================================
@@ -1995,23 +2001,25 @@
                 <table class="best-table">
                     <thead>
                         <tr>
-                            <th>Ordernr</th>
-                            <th>Projekt</th>
+                            <th>Best.nr</th>
+                            <th>Best.datum</th>
                             <th>Leverantör</th>
-                            <th>Leveransdatum</th>
-                            <th>Status</th>
-                            <th>Mottagen</th>
+                            <th style="width:70px;text-align:center;">Status</th>
+                            <th>Lev.datum</th>
+                            <th>Ordernr/Projekt</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${filtered.map(b => `
                             <tr onclick="showBestModal('${b.id}')">
                                 <td><strong>${b.ordernr}</strong></td>
-                                <td>${b.projekt || '-'}</td>
+                                <td>${b.datum || '-'}</td>
                                 <td>${b.leverantor || '-'}</td>
+                                <td style="text-align:center;">
+                                    <span style="display:inline-block;background:${getPillColor(b.status)};color:white;font-size:0.72rem;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;">${getStatusLabel(b.status)}</span>
+                                </td>
                                 <td>${b.levdatum || '-'}</td>
-                                <td><span class="status-pill" style="background: ${getPillColor(b.status)}; color: ${b.status === 'levererad' || b.status === 'oppen' ? 'white' : '#333'};">${b.status}</span></td>
-                                <td>${b.mottagen || '-'}</td>
+                                <td>${b.projekt || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -2022,7 +2030,22 @@
         }
         
         function getPillColor(status) {
-            return { oppen: '#F57C00', dellevererad: '#1565C0', levererad: '#2E7D32', avbruten: '#9E9E9E' }[status] || '#9E9E9E';
+            return {
+                oppen:        '#FFB74D',
+                skickad:      '#42A5F5',
+                dellevererad: '#7E57C2',
+                levererad:    '#66BB6A',
+                avbruten:     '#BDBDBD'
+            }[status] || '#BDBDBD';
+        }
+        function getStatusLabel(status) {
+            return {
+                oppen:        'Öppen',
+                skickad:      'Skick.',
+                dellevererad: 'Del.lev',
+                levererad:    'Lev.',
+                avbruten:     'Avbr.'
+            }[status] || status;
         }
         
         async function showBestModal(bestId = null) {
@@ -2039,7 +2062,7 @@
                 msSalesNames.map(n => `<option value="${n}" ${b && b.referens === n ? 'selected' : ''}>${n}</option>`).join('');
 
             document.getElementById('bestModalTitle').textContent = b ? `Beställning ${b.ordernr}` : 'Ny beställning';
-            document.getElementById('bestOrdernr').value   = b ? b.ordernr   : generateBestOrdernr();
+            document.getElementById('bestOrdernr').value   = b ? b.ordernr   : await generateBestOrdernr();
             document.getElementById('bestDatum').value     = b ? b.datum     : formatDate(new Date());
             document.getElementById('bestLevdatum').value  = b ? b.levdatum  : '';
             document.getElementById('bestLeverantor').value= b ? b.leverantor: '';
@@ -2137,6 +2160,64 @@
             }
         }
         
+        async function generateAndSendBestPdf() {
+            // Sätt datum till idag om det saknas
+            const datumFalt = document.getElementById('bestDatum');
+            if (!datumFalt.value) {
+                datumFalt.value = formatDate(new Date());
+            }
+            // Byt status till "skickad"
+            document.querySelectorAll('#bestStatusPills .status-pill').forEach(p => {
+                p.style.background = '#eee'; p.style.color = '#333';
+            });
+            const skickadPill = document.querySelector('#bestStatusPills .status-pill[data-best-status="skickad"]');
+            if (skickadPill) {
+                skickadPill.style.background = getPillColor('skickad');
+                skickadPill.style.color = 'white';
+            }
+            // Generera PDF med jsPDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const ordernr  = document.getElementById('bestOrdernr').value;
+            const datum    = document.getElementById('bestDatum').value;
+            const lev      = document.getElementById('bestLeverantor').value;
+            const levdatum = document.getElementById('bestLevdatum').value;
+            const projekt  = document.getElementById('bestProjekt').value;
+            const adress   = document.getElementById('bestLevAdress').value;
+            const ant      = document.getElementById('bestAnteckningar').value;
+            doc.setFontSize(18); doc.setFont('helvetica','bold');
+            doc.text('BESTÄLLNING', 105, 20, {align:'center'});
+            doc.setFontSize(10); doc.setFont('helvetica','normal');
+            doc.text(`Beställningsnr: ${ordernr}`, 14, 35);
+            doc.text(`Datum: ${datum}`, 14, 42);
+            doc.text(`Leverantör: ${lev}`, 14, 49);
+            if (levdatum) doc.text(`Önskat leveransdatum: ${levdatum}`, 14, 56);
+            if (projekt)  doc.text(`Projekt/Ordernr: ${projekt}`, 14, 63);
+            doc.text(`Leveransadress: ${adress}`, 14, 70);
+            doc.setLineWidth(0.3); doc.line(14, 76, 196, 76);
+            // Artikelrad-rubrik
+            let y = 82;
+            doc.setFont('helvetica','bold');
+            doc.text('Artikelnr', 14, y); doc.text('Beskrivning', 45, y);
+            doc.text('Märkning', 115, y); doc.text('Antal', 155, y); doc.text('Enhet', 175, y);
+            doc.setFont('helvetica','normal');
+            const artiklar = getBestArtiklarFromForm();
+            artiklar.forEach(a => {
+                y += 7;
+                if (y > 270) { doc.addPage(); y = 20; }
+                doc.text(String(a.artikelnr||''), 14, y);
+                doc.text(String(a.beskrivning||'').substring(0,35), 45, y);
+                doc.text(String(a.markning||''), 115, y);
+                doc.text(String(a.bestalt_antal||''), 155, y);
+                doc.text(String(a.enhet||'m'), 175, y);
+            });
+            if (ant) { y += 12; doc.setFont('helvetica','italic'); doc.text(`Not: ${ant}`, 14, y); }
+            doc.save(`bestellning_${ordernr}.pdf`);
+            // Spara ordern med uppdaterat datum + status skickad
+            await saveBestOrder();
+            showToast('PDF genererad — status satt till Skickad');
+        }
+
         async function deleteBestOrder() {
             if (!currentEditingBestId) return;
             if (!confirm('Ta bort denna beställning?')) return;
@@ -2224,6 +2305,7 @@
             });
             
             document.getElementById('bestSaveBtn').addEventListener('click', saveBestOrder);
+            document.getElementById('bestPdfBtn').addEventListener('click', generateAndSendBestPdf);
             document.getElementById('bestDeleteBtn').addEventListener('click', deleteBestOrder);
             
             // Fortnox sync
