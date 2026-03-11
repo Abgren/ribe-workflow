@@ -1019,8 +1019,12 @@
                             <select class="form-control" id="bestReferens"></select>
                         </div>
                         <div class="form-section">
-                            <label class="form-label">Projekt/Ordernr</label>
-                            <input type="text" class="form-control" id="bestProjekt" placeholder="Projekt eller ordernr">
+                            <label class="form-label">Order.nr</label>
+                            <input type="text" class="form-control" id="bestOrdnr" placeholder="t.ex. 2025-1234">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Projekt</label>
+                            <input type="text" class="form-control" id="bestProjekt" placeholder="Projektnamn">
                         </div>
                     </div>
                     <div class="form-section">
@@ -1049,7 +1053,7 @@
                         <thead>
                             <tr>
                                 <th>Artikelnr</th>
-                                <th>Beskrivning / Märkning</th>
+                                <th>Beskrivning / Klippmått / Märkning</th>
                                 <th style="width:80px;">Best.antal</th>
                                 <th style="width:80px;">Lev.antal</th>
                                 <th style="width:90px;">À-pris</th>
@@ -2066,17 +2070,19 @@
                     <thead>
                         <tr>
                             <th>Best.nr</th>
+                            <th>Order.nr</th>
                             <th>Best.datum</th>
                             <th>Leverantör</th>
                             <th style="width:70px;text-align:center;">Status</th>
                             <th>Lev.datum</th>
-                            <th>Ordernr/Projekt</th>
+                            <th>Projekt</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${filtered.map(b => `
                             <tr onclick="showBestModal('${b.id}')">
                                 <td><strong>${b.ordernr}</strong></td>
+                                <td>${b.ordnr || '-'}</td>
                                 <td>${b.datum || '-'}</td>
                                 <td>${b.leverantor || '-'}</td>
                                 <td style="text-align:center;">
@@ -2134,6 +2140,7 @@
             document.getElementById('bestLevAdressLev').value = b ? (b.levadressLev || '') : '';
             document.getElementById('bestErReferens').value   = b ? (b.erReferens || '')   : '';
             document.getElementById('bestErtRefNr').value     = b ? (b.ertRefNr || '')     : '';
+            document.getElementById('bestOrdnr').value        = b ? (b.ordnr || '') : '';
             document.getElementById('bestProjekt').value      = b ? b.projekt    : '';
             document.getElementById('bestBetalning').value    = b ? b.betalning  : '30 dagar netto';
             document.getElementById('bestLevvillkor').value   = b ? (b.levvillkor || '') : '';
@@ -2159,7 +2166,7 @@
         
         function renderBestArtiklar(artiklar) {
             const tbody = document.getElementById('bestArtiklarBody');
-            const rows = (artiklar && artiklar.length > 0 ? artiklar : [{ artikelnr: '', beskrivning: '', markning: '', bestalt_antal: '', levererat_antal: '', enhet: 'm', levererad: false }]);
+            const rows = (artiklar && artiklar.length > 0 ? artiklar : [{ artikelnr: '', beskrivning: '', klippmatt: '', artikel_projekt: '', markning: '', artikel_ordernr: '', bestalt_antal: '', levererat_antal: '', levererad: false }]);
             tbody.innerHTML = rows.map((a, i) => {
                 const apris = parseFloat(a.apris) || 0;
                 const antal = parseFloat(a.bestalt_antal) || 0;
@@ -2169,7 +2176,10 @@
                     <td><input type="text" value="${a.artikelnr || ''}" placeholder="Artikelnr" data-best-field="artikelnr" data-idx="${i}" style="width:80px;"></td>
                     <td>
                         <input type="text" value="${a.beskrivning || ''}" placeholder="Beskrivning" data-best-field="beskrivning" data-idx="${i}" style="width:100%;margin-bottom:3px;">
-                        <input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}" style="width:100%;font-size:0.82em;color:#666;">
+                        <input type="text" value="${a.klippmatt || ''}" placeholder="Klippmått" data-best-field="klippmatt" data-idx="${i}" style="width:100%;font-size:0.82em;color:#555;margin-bottom:2px;">
+                        <input type="text" value="${a.artikel_projekt || ''}" placeholder="Projekt" data-best-field="artikel_projekt" data-idx="${i}" style="width:100%;font-size:0.82em;color:#555;margin-bottom:2px;">
+                        <input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}" style="width:100%;font-size:0.82em;color:#555;margin-bottom:2px;">
+                        <input type="text" value="${a.artikel_ordernr || ''}" placeholder="Order.nr" data-best-field="artikel_ordernr" data-idx="${i}" style="width:100%;font-size:0.82em;color:#555;">
                     </td>
                     <td><input type="number" value="${a.bestalt_antal || ''}" placeholder="0" data-best-field="bestalt_antal" data-idx="${i}" oninput="updateBestTotalt()" style="width:65px;"></td>
                     <td><input type="number" value="${a.levererat_antal || ''}" placeholder="0" data-best-field="levererat_antal" data-idx="${i}" style="width:65px;"></td>
@@ -2213,9 +2223,12 @@
         function getBestArtiklarFromForm() {
             const rows = document.querySelectorAll('#bestArtiklarBody tr');
             return Array.from(rows).map(row => ({
-                artikelnr:     row.querySelector('[data-best-field="artikelnr"]')?.value     || '',
-                beskrivning:   row.querySelector('[data-best-field="beskrivning"]')?.value   || '',
-                markning:      row.querySelector('[data-best-field="markning"]')?.value      || '',
+                artikelnr:       row.querySelector('[data-best-field="artikelnr"]')?.value       || '',
+                beskrivning:     row.querySelector('[data-best-field="beskrivning"]')?.value     || '',
+                klippmatt:       row.querySelector('[data-best-field="klippmatt"]')?.value       || '',
+                artikel_projekt: row.querySelector('[data-best-field="artikel_projekt"]')?.value || '',
+                markning:        row.querySelector('[data-best-field="markning"]')?.value        || '',
+                artikel_ordernr: row.querySelector('[data-best-field="artikel_ordernr"]')?.value || '',
                 bestalt_antal:   row.querySelector('[data-best-field="bestalt_antal"]')?.value   || '',
                 levererat_antal: row.querySelector('[data-best-field="levererat_antal"]')?.value || '',
                 apris:           row.querySelector('[data-best-field="apris"]')?.value           || '',
@@ -2238,6 +2251,7 @@
                 erReferens:   document.getElementById('bestErReferens').value,
                 ertRefNr:     document.getElementById('bestErtRefNr').value,
                 referens:     document.getElementById('bestReferens').value,
+                ordnr:        document.getElementById('bestOrdnr').value,
                 projekt:      document.getElementById('bestProjekt').value,
                 betalning:    document.getElementById('bestBetalning').value,
                 levvillkor:   document.getElementById('bestLevvillkor').value,
@@ -2372,7 +2386,12 @@
                 const summa = antal * apris;
                 fn(a.artikelnr||'', 16, y, 9);
                 fn((a.beskrivning||'').substring(0,40), 38, y, 9);
-                if (a.markning) { fi('Märkning: '+a.markning, 38, y+4, 7); y += 2; }
+                let subY = y;
+                if (a.klippmatt)       { subY += 4; fi('Klippmått: '+a.klippmatt, 38, subY, 7); }
+                if (a.artikel_projekt) { subY += 4; fi('Projekt: '+a.artikel_projekt, 38, subY, 7); }
+                if (a.markning)        { subY += 4; fi('Märkning: '+a.markning, 38, subY, 7); }
+                if (a.artikel_ordernr) { subY += 4; fi('Order.nr: '+a.artikel_ordernr, 38, subY, 7); }
+                if (subY > y) y = subY;
                 fn(antal ? String(antal) : '', 102, y, 9);
                 const levAntal = parseFloat(a.levererat_antal) || 0;
                 fn(levAntal ? String(levAntal) : '', 128, y, 9);
