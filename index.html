@@ -2300,14 +2300,12 @@
             fw('Adress', 110, 39, 9);
             fn(lev||'', 138, 39, 9);
             // Dela adressen på komma eller radbrytning
-            const levAdrParts = levAdrLev ? levAdrLev.split(/,|
-/).map(s => s.trim()).filter(Boolean) : [];
+            const levAdrParts = levAdrLev ? levAdrLev.split(',').map(s => s.trim()).filter(Boolean) : [];
             levAdrParts.forEach((line, i) => fn(line, 138, 44 + i * 5, 9));
 
             // ── VÅR LEVERANSADRESS höger nedre ──────────────────────
             fw('Vår leveransadress', 110, 58, 9);
-            const levAdressParts = levAdress ? levAdress.split(/,|
-/).map(s => s.trim()).filter(Boolean) : [];
+            const levAdressParts = levAdress ? levAdress.replace(/\n/g,',').split(',').map(s => s.trim()).filter(Boolean) : [];
             levAdressParts.forEach((line, i) => fn(line, 138, 63 + i * 5, 9));
 
             // ── REFERENSRUTA ─────────────────────────────────────────
