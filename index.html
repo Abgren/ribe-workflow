@@ -1047,8 +1047,8 @@
                             <tr>
                                 <th>Artikelnr</th>
                                 <th>Beskrivning / Märkning</th>
-                                <th style="width:70px;">Antal</th>
-                                <th style="width:60px;">Enh</th>
+                                <th style="width:80px;">Best.antal</th>
+                                <th style="width:80px;">Lev.antal</th>
                                 <th style="width:90px;">À-pris</th>
                                 <th style="width:90px;">Summa</th>
                                 <th style="width:60px;">Lev.</th>
@@ -2144,7 +2144,7 @@
                         <input type="text" value="${a.markning || ''}" placeholder="Märkning" data-best-field="markning" data-idx="${i}" style="width:100%;font-size:0.82em;color:#666;">
                     </td>
                     <td><input type="number" value="${a.bestalt_antal || ''}" placeholder="0" data-best-field="bestalt_antal" data-idx="${i}" oninput="updateBestTotalt()" style="width:65px;"></td>
-                    <td><input type="text" value="${a.enhet || 'm'}" placeholder="enh" data-best-field="enhet" data-idx="${i}" style="width:50px;"></td>
+                    <td><input type="number" value="${a.levererat_antal || ''}" placeholder="0" data-best-field="levererat_antal" data-idx="${i}" style="width:65px;"></td>
                     <td><input type="number" value="${a.apris || ''}" placeholder="0,00" step="0.01" data-best-field="apris" data-idx="${i}" oninput="updateBestTotalt()" style="width:80px;"></td>
                     <td style="text-align:right;padding-right:8px;font-weight:500;">${summa > 0 ? summa.toFixed(2) : '-'}</td>
                     <td style="text-align:center;vertical-align:middle;">
@@ -2188,9 +2188,9 @@
                 artikelnr:     row.querySelector('[data-best-field="artikelnr"]')?.value     || '',
                 beskrivning:   row.querySelector('[data-best-field="beskrivning"]')?.value   || '',
                 markning:      row.querySelector('[data-best-field="markning"]')?.value      || '',
-                bestalt_antal: row.querySelector('[data-best-field="bestalt_antal"]')?.value || '',
-                enhet:         row.querySelector('[data-best-field="enhet"]')?.value         || 'm',
-                apris:         row.querySelector('[data-best-field="apris"]')?.value         || '',
+                bestalt_antal:   row.querySelector('[data-best-field="bestalt_antal"]')?.value   || '',
+                levererat_antal: row.querySelector('[data-best-field="levererat_antal"]')?.value || '',
+                apris:           row.querySelector('[data-best-field="apris"]')?.value           || '',
                 levererad:     row.querySelector('input[type="checkbox"]')?.checked          || false
             }));
         }
@@ -2273,8 +2273,7 @@
             fw('Ribe Gardin AB', 14, 16, 18);
             fn('Box 2027', 14, 22, 9);
             fn('135 02  Tyresö', 14, 27, 9);
-            fw('Beställning', 196, 16, 16);
-            doc.setFont('helvetica','normal');
+            doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('Beställning', 196, 16, { align: 'right' }); doc.setFont('helvetica','normal');
 
             // ── INFOBOX vänster (ram) ────────────────────────────────
             // Rektangel: x=14, y=33, w=88, h=38
@@ -2331,9 +2330,9 @@
             doc.line(14, y + 2, 196, y + 2);
             fw('Artnr', 16, y, 8);
             fw('Benämning', 38, y, 8);
-            fw('Antal', 128, y, 8);
-            fw('Enh', 145, y, 8);
-            fw('À-pris', 158, y, 8);
+            fw('Best.antal', 102, y, 8);
+            fw('Lev.antal', 128, y, 8);
+            fw('À-pris', 154, y, 8);
             fw('Summa', 178, y, 8);
 
             doc.setFont('helvetica','normal'); doc.setFontSize(9);
@@ -2344,11 +2343,12 @@
                 const apris = parseFloat(a.apris) || 0;
                 const summa = antal * apris;
                 fn(a.artikelnr||'', 16, y, 9);
-                fn((a.beskrivning||'').substring(0,42), 38, y, 9);
+                fn((a.beskrivning||'').substring(0,40), 38, y, 9);
                 if (a.markning) { fi('Märkning: '+a.markning, 38, y+4, 7); y += 2; }
-                fn(antal ? String(antal) : '', 128, y, 9);
-                fn(a.enhet||'m', 145, y, 9);
-                if (apris) fn(apris.toFixed(2), 158, y, 9);
+                fn(antal ? String(antal) : '', 102, y, 9);
+                const levAntal = parseFloat(a.levererat_antal) || 0;
+                fn(levAntal ? String(levAntal) : '', 128, y, 9);
+                if (apris) fn(apris.toFixed(2), 154, y, 9);
                 if (summa) fn(summa.toFixed(2), 178, y, 9);
                 // Tunn separator
                 doc.setLineWidth(0.1); doc.line(14, y+3, 196, y+3);
