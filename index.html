@@ -1491,6 +1491,9 @@
         function handleLogout() {
             sessionStorage.removeItem('ribeUser');
             currentUser = null;
+            // Återställ Linda-specifik state
+            window._lindaBestViewSet = false;
+            bestViewMode = 'table';
             showLoginScreen();
         }
         
@@ -2756,13 +2759,19 @@
 
             // Initiera vy-läge baserat på inloggad användare
             const isLinda = currentUser?.name === 'Linda';
-            if (isLinda && bestViewMode === 'table' && !window._bestViewInitialized) {
-                bestViewMode = 'inleverans';
-                window._bestViewInitialized = true;
+            if (isLinda) {
+                // Linda får inleverans-vy som standard (om hon inte manuellt valt tabell)
+                if (!window._lindaBestViewSet) {
+                    bestViewMode = 'inleverans';
+                    window._lindaBestViewSet = true;
+                }
+            } else {
+                // Alla andra: återställ alltid till tabell-vy (Linda ska inte "smitta" andra)
+                bestViewMode = 'table';
             }
-            // Visa toggle för Linda
+            // Visa toggle bara för Linda
             const toggleEl = document.getElementById('bestViewToggle');
-            if (toggleEl && isLinda) toggleEl.style.display = 'flex';
+            if (toggleEl) toggleEl.style.display = isLinda ? 'flex' : 'none';
             _updateBestViewUI();   // uppdaterar knapp-styling + filterBar-synlighet
 
             // ── INLEVERANS-VY ──────────────────────────────────────────────
