@@ -1489,15 +1489,21 @@
             <div class="tab-panel tab-panel-matt" id="mattPanel">
                 <div style="padding:0.75rem 1rem;background:white;border-bottom:1px solid #e8e8e8;display:flex;gap:0.6rem;align-items:center;flex-shrink:0;flex-wrap:wrap;">
                     <span style="font-size:1rem;font-weight:700;color:#5e35b1;"><i class="bi bi-rulers"></i> Måttlista</span>
-                    <input type="text" id="mattTabSearch" placeholder="🔍 Sök ordernr / kund / projekt..." oninput="renderMattTab()"
-                        style="flex:1;min-width:160px;max-width:320px;border:1px solid #ddd;border-radius:8px;padding:0.35rem 0.7rem;font-size:0.88rem;">
+                    <input type="text" id="mattTabSearch" placeholder="🔍 Sök kund / projekt..." oninput="renderMattTab()"
+                        style="flex:1;min-width:160px;max-width:300px;border:1px solid #ddd;border-radius:8px;padding:0.35rem 0.7rem;font-size:0.88rem;">
                     <select id="mattTabFilter" onchange="renderMattTab()"
                         style="border:1px solid #ddd;border-radius:8px;padding:0.35rem 0.6rem;font-size:0.85rem;background:white;">
-                        <option value="all">— Alla SOM-ordrar —</option>
+                        <option value="all">— Alla måttlistor —</option>
+                        <option value="standalone">📋 Fristående listor</option>
+                        <option value="som">🧵 SOM-kopplade</option>
                         <option value="incomplete">📐 Saknar slutmått</option>
                         <option value="complete">✅ Alla mått klara</option>
                         <option value="none">🆕 Inga positioner ännu</option>
                     </select>
+                    <button onclick="openMattModalNew()"
+                        style="border:none;border-radius:8px;padding:0.35rem 0.9rem;font-size:0.85rem;font-weight:700;background:#5e35b1;color:white;cursor:pointer;white-space:nowrap;">
+                        <i class="bi bi-plus-lg"></i> Ny måttlista
+                    </button>
                 </div>
                 <div style="flex:1;overflow-y:auto;padding:1rem;" id="mattTabContent">
                     <div style="color:#bbb;text-align:center;padding:2rem;">Laddar...</div>
@@ -1533,6 +1539,14 @@
                         ✕
                     </button>
                 </div>
+            </div>
+            <!-- Fristående info-rad (visas bara för icke-SOM-listor) -->
+            <div id="mattStandaloneInfo" style="display:none;background:#ede7f6;padding:0.55rem 1rem;border-bottom:1px solid #c5b3e6;display:none;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+                <i class="bi bi-person" style="color:#5e35b1;"></i>
+                <input type="text" id="mattStandaloneKund" placeholder="Kundnamn..." autocomplete="off"
+                    style="border:1px solid #c5b3e6;border-radius:8px;padding:0.3rem 0.65rem;font-size:0.88rem;width:200px;">
+                <input type="text" id="mattStandaloneProjekt" placeholder="Projekt / Beskrivning (valfritt)" autocomplete="off"
+                    style="border:1px solid #c5b3e6;border-radius:8px;padding:0.3rem 0.65rem;font-size:0.88rem;flex:1;min-width:160px;">
             </div>
             <div class="matt-modal-body">
                 <div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">
@@ -4499,31 +4513,67 @@
         // MÅTTLISTA MODAL — popup-fönster
         // ============================================================================
 
-        async function openMattModal(jobId) {
-            if (!jobId) { showToast('Spara sömnadsorder först'); return; }
-            // Om modalen anropas från SOM-formuläret medan det är öppet,
-            // använd redan inläst _mattlista (ordern är inte sparad ännu)
-            const existingJobId = currentEditingJobId;
-            if (jobId === existingJobId) {
-                // Använd pågående redigering — ordern är ev. inte sparad ännu
-                // window._mattlista är redan korrekt inläst
-            } else {
-                // Anrop från Måttlista-fliken — ladda från DB
-                const jobs = await loadOrders('som');
+        // Öppna en ny, fristående måttlista (ej kopplad till SOM-order)
+        function openMattModalNew() {
+            window._mattOrderType  = 'matt';
+            window._mattModalJobId = null;
+            window._mattlista      = [];
+            const si = document.getElementById('mattStandaloneInfo');
+            if (si) { si.style.display = 'flex'; }
+            const sk = document.getElementById('mattStandaloneKund');
+            const sp = document.getElementById('mattStandaloneProjekt');
+            if (sk) sk.value = '';
+            if (sp) sp.value = '';
+            document.getElementById('mattModalTitle').textContent = 'Ny fristående måttlista';
+            updateMattStatusBadge();
+            renderMattlista();
+            document.getElementById('mattModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => { if (sk) sk.focus(); }, 120);
+        }
+
+        async function openMattModal(jobId, type) {
+            // type kan vara 'som' (default) eller 'matt' (fristående)
+            const resolvedType = type || 'som';
+            window._mattOrderType = resolvedType;
+
+            const si = document.getElementById('mattStandaloneInfo');
+
+            if (resolvedType === 'matt') {
+                // Fristående befintlig måttlista
+                if (!jobId) { openMattModalNew(); return; }
+                const jobs = await loadOrders('matt');
                 const job  = jobs.find(j => j.id === jobId);
                 if (!job) { showToast('Order ej hittad'); return; }
-                window._mattlista = JSON.parse(JSON.stringify(job.mattlista || []));
+                window._mattlista      = JSON.parse(JSON.stringify(job.mattlista || []));
+                window._mattModalJobId = jobId;
+                document.getElementById('mattModalTitle').textContent =
+                    [job.kund, job.projekt].filter(Boolean).join(' · ') || 'Fristående måttlista';
+                const sk = document.getElementById('mattStandaloneKund');
+                const sp = document.getElementById('mattStandaloneProjekt');
+                if (sk) sk.value = job.kund    || '';
+                if (sp) sp.value = job.projekt || '';
+                if (si) si.style.display = 'flex';
+            } else {
+                // SOM-order (ursprungligt beteende)
+                if (!jobId) { showToast('Spara sömnadsorder först'); return; }
+                if (si) si.style.display = 'none';
+                const existingJobId = currentEditingJobId;
+                if (jobId !== existingJobId) {
+                    const jobs = await loadOrders('som');
+                    const job  = jobs.find(j => j.id === jobId);
+                    if (!job) { showToast('Order ej hittad'); return; }
+                    window._mattlista = JSON.parse(JSON.stringify(job.mattlista || []));
+                }
+                window._mattModalJobId = jobId;
+                let titleText = jobId;
+                try {
+                    const jobs = await loadOrders('som');
+                    const job  = jobs.find(j => j.id === jobId);
+                    if (job) titleText = [job.ordernr, job.kund, job.projekt].filter(Boolean).join(' · ');
+                } catch(e) {}
+                document.getElementById('mattModalTitle').textContent = titleText;
             }
-            window._mattModalJobId = jobId;
-
-            // Hämta titel-info
-            let titleText = jobId;
-            try {
-                const jobs = await loadOrders('som');
-                const job  = jobs.find(j => j.id === jobId);
-                if (job) titleText = [job.ordernr, job.kund, job.projekt].filter(Boolean).join(' · ');
-            } catch(e) {}
-            document.getElementById('mattModalTitle').textContent = titleText;
 
             renderMattlista();
             document.getElementById('mattModal').classList.add('open');
@@ -4536,6 +4586,47 @@
         }
 
         async function saveMattModal(close = true) {
+            const orderType = window._mattOrderType || 'som';
+
+            if (orderType === 'matt') {
+                // --- Fristående måttlista ---
+                const kund    = (document.getElementById('mattStandaloneKund')?.value  || '').trim();
+                const projekt = (document.getElementById('mattStandaloneProjekt')?.value || '').trim();
+                if (!kund) {
+                    showToast('⚠️ Ange kundnamn innan du sparar');
+                    document.getElementById('mattStandaloneKund')?.focus();
+                    return;
+                }
+                let jobId = window._mattModalJobId;
+                let job;
+                if (jobId) {
+                    const jobs = await loadOrders('matt');
+                    job = jobs.find(j => j.id === jobId);
+                    if (!job) job = { id: jobId, kund, projekt, mattlista: [] };
+                } else {
+                    jobId = 'matt_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+                    job   = { id: jobId, kund, projekt, mattlista: [] };
+                    window._mattModalJobId = jobId;
+                }
+                job.kund      = kund;
+                job.projekt   = projekt;
+                job.mattlista = JSON.parse(JSON.stringify(window._mattlista || []));
+                const ok = await saveOrder('matt', job);
+                if (ok) {
+                    if (close) {
+                        showToast('✅ Slutmått sparat!');
+                        closeMattModal();
+                    } else {
+                        showToast('💾 Mått sparade');
+                        document.getElementById('mattModalTitle').textContent =
+                            [kund, projekt].filter(Boolean).join(' · ') || 'Fristående måttlista';
+                    }
+                    if (currentTab === 'matt') await renderMattTab();
+                }
+                return;
+            }
+
+            // --- SOM-kopplad måttlista (ursprungligt beteende) ---
             const jobId = window._mattModalJobId;
             if (!jobId) return;
             const jobs = await loadOrders('som');
@@ -4565,38 +4656,63 @@
             if (!container) return;
             container.innerHTML = '<div style="color:#bbb;text-align:center;padding:2rem;">Laddar...</div>';
 
-            const allJobs = await loadOrders('som');
-            const myName  = currentUser?.name || '';
-            const mySal   = getSaljareForUser(myName);
+            const myName     = currentUser?.name || '';
+            const mySal      = getSaljareForUser(myName);
             const matchNames = [myName, mySal].filter(Boolean).map(n => n.toLowerCase());
 
-            // Säljare ser bara sina egna SOM-ordrar
-            let jobs = allJobs.filter(j => j.status !== 'makulerad');
+            // Ladda SOM-ordrar
+            const allSom = await loadOrders('som');
+            let somJobs = allSom.filter(j => j.status !== 'makulerad');
             if (mySal || (!mySal && myName !== '' && myName !== 'Lilly' && myName !== 'Ali')) {
-                jobs = jobs.filter(j => j.saljare && matchNames.includes(j.saljare.toLowerCase()));
+                somJobs = somJobs.filter(j => j.saljare && matchNames.includes(j.saljare.toLowerCase()));
             }
+
+            // Ladda fristående måttlistor
+            const allMatt = await loadOrders('matt');
+            // Fristående listas med säljare-koll om möjligt (kund == säljare? Nej — visa alla för säljaren)
+            let mattJobs = allMatt;
 
             const search = (document.getElementById('mattTabSearch')?.value || '').toLowerCase();
             const filter = document.getElementById('mattTabFilter')?.value || 'all';
 
+            // Bygg kombinerad lista med typ-markering
+            let combined = [
+                ...somJobs.map(j  => ({ ...j, _rowType: 'som'  })),
+                ...mattJobs.map(j => ({ ...j, _rowType: 'matt' }))
+            ];
+
+            // Filtrera på typ
+            if (filter === 'standalone') combined = combined.filter(j => j._rowType === 'matt');
+            if (filter === 'som')        combined = combined.filter(j => j._rowType === 'som');
+
+            // Sök
             if (search) {
-                jobs = jobs.filter(j =>
+                combined = combined.filter(j =>
                     (j.ordernr||'').toLowerCase().includes(search) ||
-                    (j.kund||'').toLowerCase().includes(search) ||
+                    (j.kund||'').toLowerCase().includes(search)    ||
                     (j.projekt||'').toLowerCase().includes(search));
             }
-            if (filter === 'incomplete') jobs = jobs.filter(j => {
+
+            // Mått-filter
+            if (filter === 'incomplete') combined = combined.filter(j => {
                 const ml = j.mattlista || [];
                 return ml.length > 0 && ml.some(p => !p.bredd_slut || !p.hojd_slut);
             });
-            if (filter === 'complete') jobs = jobs.filter(j => {
+            if (filter === 'complete') combined = combined.filter(j => {
                 const ml = j.mattlista || [];
                 return ml.length > 0 && ml.every(p => p.bredd_slut && p.hojd_slut);
             });
-            if (filter === 'none') jobs = jobs.filter(j => !(j.mattlista || []).length);
+            if (filter === 'none') combined = combined.filter(j => !(j.mattlista || []).length);
 
-            if (!jobs.length) {
-                container.innerHTML = '<div style="color:#bbb;text-align:center;padding:2rem;font-size:0.95rem;">Inga sömnadsordrar hittades</div>';
+            if (!combined.length) {
+                container.innerHTML = `<div style="color:#bbb;text-align:center;padding:2rem;font-size:0.95rem;">
+                    Inga måttlistor hittades
+                    <br><br>
+                    <button onclick="openMattModalNew()"
+                        style="border:none;border-radius:8px;padding:0.45rem 1.1rem;font-size:0.88rem;font-weight:700;background:#5e35b1;color:white;cursor:pointer;">
+                        <i class="bi bi-plus-lg"></i> Skapa ny fristående måttlista
+                    </button>
+                </div>`;
                 return;
             }
 
@@ -4607,32 +4723,44 @@
             <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
                 <thead>
                     <tr style="background:#f5f5f5;">
-                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Order</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Typ</th>
                         <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Kund / Projekt</th>
-                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Status</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Status / Order</th>
                         <th style="padding:0.5rem 0.75rem;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #ddd;">📐 Mått</th>
                         <th style="padding:0.5rem 0.75rem;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #ddd;"></th>
                     </tr>
                 </thead>
                 <tbody>
-                ${jobs.map(job => {
-                    const ml   = job.mattlista || [];
-                    const done = ml.filter(p => p.bredd_slut && p.hojd_slut).length;
+                ${combined.map(job => {
+                    const ml      = job.mattlista || [];
+                    const done    = ml.filter(p => p.bredd_slut && p.hojd_slut).length;
                     const allDone = ml.length > 0 && done === ml.length;
                     const mattHtml = ml.length === 0
                         ? '<span style="color:#bbb;font-size:0.8rem;">Inga positioner</span>'
                         : allDone
                             ? `<span style="background:#e8f5e9;color:#2e7d32;padding:0.1rem 0.55rem;border-radius:10px;font-weight:700;font-size:0.8rem;">✅ ${done}/${ml.length}</span>`
                             : `<span style="background:#fff3e0;color:#e65100;padding:0.1rem 0.55rem;border-radius:10px;font-weight:600;font-size:0.8rem;">📐 ${done}/${ml.length}</span>`;
-                    return `<tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''" onclick="openMattModal('${job.id}')">
-                        <td style="padding:0.55rem 0.75rem;font-weight:700;color:#1A3C5E;">${job.ordernr || '–'}</td>
-                        <td style="padding:0.55rem 0.75rem;color:#444;">${[job.kund, job.projekt].filter(Boolean).join(' · ') || '–'}</td>
-                        <td style="padding:0.55rem 0.75rem;">
-                            <span style="background:${SOM_SC[job.status]||'#999'};color:white;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.75rem;font-weight:600;">${SOM_SL[job.status]||job.status}</span>
-                        </td>
+
+                    const isSom  = job._rowType === 'som';
+                    const typBadge = isSom
+                        ? `<span style="background:#e8eaf6;color:#1a237e;padding:0.1rem 0.5rem;border-radius:8px;font-size:0.75rem;font-weight:600;">🧵 SOM</span>`
+                        : `<span style="background:#f3e5f5;color:#6a1b9a;padding:0.1rem 0.5rem;border-radius:8px;font-size:0.75rem;font-weight:600;">📋 Fristående</span>`;
+                    const statusCell = isSom
+                        ? `<span style="background:${SOM_SC[job.status]||'#999'};color:white;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.75rem;font-weight:600;">${SOM_SL[job.status]||job.status}</span>
+                           <span style="font-size:0.75rem;color:#888;margin-left:4px;">${job.ordernr||''}</span>`
+                        : `<span style="color:#aaa;font-size:0.78rem;">–</span>`;
+
+                    const openFn = isSom
+                        ? `openMattModal('${job.id}','som')`
+                        : `openMattModal('${job.id}','matt')`;
+
+                    return `<tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''" onclick="${openFn}">
+                        <td style="padding:0.55rem 0.75rem;">${typBadge}</td>
+                        <td style="padding:0.55rem 0.75rem;color:#444;font-weight:600;">${[job.kund, job.projekt].filter(Boolean).join(' · ') || '–'}</td>
+                        <td style="padding:0.55rem 0.75rem;">${statusCell}</td>
                         <td style="padding:0.55rem 0.75rem;text-align:center;">${mattHtml}</td>
                         <td style="padding:0.55rem 0.75rem;text-align:center;">
-                            <button onclick="event.stopPropagation();openMattModal('${job.id}')"
+                            <button onclick="event.stopPropagation();${openFn}"
                                 style="border:none;border-radius:8px;padding:0.25rem 0.7rem;font-size:0.78rem;background:#5e35b1;color:white;cursor:pointer;font-weight:600;">
                                 ✏️ Öppna
                             </button>
