@@ -277,13 +277,112 @@
             overflow: hidden;
         }
 
-        /* BEST, Dagstavla och Fakturering har kolumn-layout och hanterar padding internt */
+        /* BEST, Dagstavla, Montör och Fakturering har kolumn-layout */
         .tab-panel-best.active,
         .tab-panel-dag.active,
+        .tab-panel-mont.active,
         .tab-panel-fakt.active {
             flex-direction: column;
             padding: 0;
             gap: 0;
+        }
+
+        /* ── MONTÖR-VY ── */
+        .mont-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: box-shadow 0.15s;
+        }
+        .mont-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .mont-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0.85rem 1rem 0.6rem;
+            cursor: pointer;
+            gap: 0.5rem;
+        }
+        .mont-card-body {
+            padding: 0 1rem 0.85rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .mont-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin: 0.85rem 0 0.4rem;
+        }
+        .mont-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: opacity 0.15s;
+        }
+        .mont-btn:active { opacity: 0.75; }
+        .mont-info-row {
+            display: flex;
+            gap: 0.4rem;
+            align-items: flex-start;
+            font-size: 0.87rem;
+            margin-bottom: 0.3rem;
+            color: #333;
+        }
+        .mont-info-row i { color: #888; margin-top: 0.1rem; flex-shrink: 0; }
+        .mont-bilaga-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #e3f2fd;
+            color: #1565C0;
+            border-radius: 8px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .mont-som-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: #e0f2f1;
+            color: #00695C;
+            border-radius: 8px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        /* ── MOBILANPASSNING ── */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                gap: 0;
+            }
+            .nav-link {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.78rem;
+                white-space: nowrap;
+            }
+            .nav-link i { display: none; }
+            .sidebar { display: none !important; }
+            .calendar-container { padding: 0.25rem; }
+            #mainDrawer { width: 100% !important; max-width: 100% !important; }
+            .mont-card-header { flex-direction: column; }
         }
 
         /* ── FAKTURERING ── */
@@ -877,13 +976,22 @@
             <p>Välj ditt namn för att fortsätta</p>
             <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;">
                 <option value="">-- Välj namn --</option>
-                <option>Anders</option>
-                <option>Tina</option>
-                <option>Daniel</option>
-                <option>Lilly</option>
-                <option>Tess</option>
-                <option>Ali</option>
-                <option>Linda</option>
+                <optgroup label="Säljare">
+                    <option>Anders</option>
+                    <option>Tina</option>
+                    <option>Daniel</option>
+                    <option>Tess</option>
+                    <option>Linda</option>
+                </optgroup>
+                <optgroup label="Koordinator">
+                    <option>Lilly</option>
+                    <option>Ali</option>
+                </optgroup>
+                <optgroup label="Montör">
+                    <option>Hampus</option>
+                    <option>Mukta</option>
+                    <option>David</option>
+                </optgroup>
             </select>
             <button class="login-btn" id="loginBtnMsal">
                 <i class="bi bi-box-arrow-in-right"></i> Logga in
@@ -928,6 +1036,9 @@
             </button>
             <button class="nav-link" id="tab-dag" role="tab" data-tab="dag">
                 <i class="bi bi-kanban"></i> Dagstavla
+            </button>
+            <button class="nav-link" id="tab-mont" role="tab" data-tab="mont">
+                <i class="bi bi-person-workspace"></i> Mina jobb
             </button>
             <button class="nav-link" id="tab-fakt" role="tab" data-tab="fakt">
                 <i class="bi bi-receipt"></i> Klar för fakturering
@@ -1059,6 +1170,21 @@
                     </div>
                 </div>
                 <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="dagstavlaContainer"></div>
+            </div>
+
+            <!-- MINA JOBB TAB (montörer) -->
+            <div class="tab-panel tab-panel-mont">
+                <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div id="montTabTitle" style="font-size:1.1rem;font-weight:700;color:#1A3C5E;">Mina jobb</div>
+                        <div id="montTabSubtitle" style="font-size:0.8rem;color:#999;">Dina tilldelade arbetsordrar</div>
+                    </div>
+                    <label style="font-size:0.82rem;color:#555;display:flex;align-items:center;gap:0.35rem;cursor:pointer;">
+                        <input type="checkbox" id="montVisaKlara" onchange="renderMontorVy()">
+                        Visa klara
+                    </label>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:1rem;" id="montContainer"></div>
             </div>
 
             <!-- KLAR FÖR FAKTURERING TAB -->
@@ -1341,6 +1467,21 @@
         let msSalesNames = ['Danne', 'Tessan', 'Tina', 'Anders'];
         let msMontörNames = ['Ali', 'Hampus', 'Mukta', 'David'];
         let msSewersNames = [];
+
+        // Inloggningsnamn som är montörer (inkl. Ali som har dubbel roll)
+        const MONTOR_LOGINS = new Set(['Hampus', 'Mukta', 'David', 'Ali']);
+
+        function isMontor(loginName) {
+            return MONTOR_LOGINS.has(loginName);
+        }
+
+        // Kontrollera om ett jobb tillhör en viss montör (primär eller medmontör)
+        function jobTillhorMontor(job, montorName) {
+            if (!montorName) return false;
+            if ((job.montor || '').toLowerCase() === montorName.toLowerCase()) return true;
+            const co = job.co_montorer || [];
+            return co.some(n => n.toLowerCase() === montorName.toLowerCase());
+        }
         window._deliveryReminderSent = false;
 
         // Mapping: inloggningsnamn → säljarnamn i formulär
@@ -1352,6 +1493,10 @@
             'Linda':   'Rita/Linda',
             'Lilly':   '',
             'Ali':     '',
+            // Montörer har inget säljarnamn
+            'Hampus':  '',
+            'Mukta':   '',
+            'David':   '',
         };
 
         function getSaljareForUser(loginName) {
@@ -1497,6 +1642,8 @@
                     if (t === 'ar') {
                         window._cachedArOrders = null; // invalidera cache
                         loadAndRenderArJobs();
+                        // Montör-vyn om den är aktiv
+                        if (currentTab === 'mont') renderMontorVy();
                     } else if (t === 'som') {
                         window._cachedSoms = null; // invalidera cache
                         loadAndRenderSomJobs();
@@ -1585,17 +1732,21 @@
         // ============================================================================
 
         async function initializeApp() {
-            // Initiera kalender
-            if (!arCalendar) initArCalendar();
-
             // Starta real-time synk mot Supabase
             setupRealtimeSync();
 
-            // Ladda initial data för AR-fliken
-            await loadAndRenderArJobs();
-
             // Setup event listeners
             setupEventListeners();
+
+            // Montörer börjar på "Mina jobb"-fliken, alla andra på AR
+            if (isMontor(currentUser?.name || '') && currentUser?.name !== 'Ali') {
+                // Ali är koordinator med dubbel roll — börjar på AR
+                await switchTab('mont');
+            } else {
+                // Initiera kalender och ladda AR
+                if (!arCalendar) initArCalendar();
+                await loadAndRenderArJobs();
+            }
         }
         
         // ============================================================================
@@ -1632,6 +1783,8 @@
                 await renderBestTable();
             } else if (tab === 'dag') {
                 await renderDagstavla();
+            } else if (tab === 'mont') {
+                await renderMontorVy();
             } else if (tab === 'fakt') {
                 await renderFaktList();
             }
@@ -1851,6 +2004,13 @@
                 .map(n => `<option value="${n}" ${jobData.saljare === n ? 'selected' : ''}>${n || '— Välj säljare —'}</option>`).join('');
             const selMontor = ['','Hampus','Ali','Mukta','David','Anders']
                 .map(n => `<option value="${n}" ${jobData.montor === n ? 'selected' : ''}>${n || '— Välj montör —'}</option>`).join('');
+            const coMontorer = jobData.co_montorer || [];
+            const coMontorCheckboxes = ['Hampus','Ali','Mukta','David','Anders'].map(n => {
+                const checked = coMontorer.includes(n) ? 'checked' : '';
+                return `<label style="display:flex;align-items:center;gap:0.3rem;font-size:0.85rem;cursor:pointer;white-space:nowrap;">
+                    <input type="checkbox" class="co-montor-cb" value="${n}" ${checked}> ${n}
+                </label>`;
+            }).join('');
 
             // Status button colors helper (inline)
             const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
@@ -1913,6 +2073,12 @@
                     <div>
                         <label class="form-label fw-semibold">Montör</label>
                         <select class="form-select" id="ar_montor">${selMontor}</select>
+                        <div style="margin-top:0.4rem;">
+                            <div style="font-size:0.75rem;color:#888;margin-bottom:0.25rem;">Med-montörer</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 0.9rem;" id="co_montor_checkboxes">
+                                ${coMontorCheckboxes}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2131,6 +2297,7 @@
                 projekt: document.getElementById('ar_projekt').value,
                 saljare: document.getElementById('ar_saljare').value,
                 montor: document.getElementById('ar_montor').value,
+                co_montorer: [...document.querySelectorAll('.co-montor-cb:checked')].map(cb => cb.value),
                 kontakt_namn: document.getElementById('ar_kontakt_namn').value,
                 kontakt_tel: document.getElementById('ar_kontakt_tel').value,
                 kontakt_mail: document.getElementById('ar_kontakt_mail').value,
@@ -3186,6 +3353,182 @@
                 section('Denna vecka', '📆', '#4527A0', dennaVecka, autoCard),
                 section('Behöver åtgärd (nya/utkast)', '🔔', '#F57C00', behoverAtgard, arCard),
             ].join('') || '<div style="padding:2rem;text-align:center;color:#999">Inget att visa just nu 🎉</div>';
+        }
+
+        // ============================================================================
+        // MONTÖR-VY — MINA JOBB
+        // ============================================================================
+
+        async function renderMontorVy() {
+            const container = document.getElementById('montContainer');
+            if (!container) return;
+            container.innerHTML = '<div style="color:#999;padding:1rem">Laddar...</div>';
+
+            const myName = currentUser?.name || '';
+            const visaKlara = document.getElementById('montVisaKlara')?.checked;
+
+            const [arJobs, somJobs] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
+
+            // Filtrera: jobb där användaren är primär montör eller medmontör
+            let mina = arJobs.filter(j => jobTillhorMontor(j, myName));
+            if (!visaKlara) mina = mina.filter(j => j.status !== 'klar');
+
+            const title = document.getElementById('montTabTitle');
+            const subtitle = document.getElementById('montTabSubtitle');
+            if (title) title.textContent = `${myName}s jobb`;
+            if (subtitle) subtitle.textContent = `${mina.length} aktiva jobb`;
+
+            if (!mina.length) {
+                container.innerHTML = '<div style="padding:3rem;text-align:center;color:#999;font-size:1rem;">Inga jobb tilldelade just nu 🎉</div>';
+                return;
+            }
+
+            const today    = new Date().toISOString().split('T')[0];
+            const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+            // Gruppera på datum
+            const forsenade  = mina.filter(j => j.startdatum && j.startdatum < today  && j.status !== 'klar');
+            const idag       = mina.filter(j => j.startdatum === today);
+            const imorgon    = mina.filter(j => j.startdatum === tomorrow);
+            const kommande   = mina.filter(j => !j.startdatum || j.startdatum > tomorrow);
+            const klara      = visaKlara ? mina.filter(j => j.status === 'klar') : [];
+
+            function montCard(job) {
+                const isOverdue = job.startdatum && job.startdatum < today && job.status !== 'klar';
+                const statusColor = { utkast:'#9E9E9E', ny:'#7B1FA2', preliminar:'#2196F3', bokad:'#1565C0', 'atergång':'#E65100', klar:'#2E7D32' };
+                const statusLabel = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar' };
+                const sc = statusColor[job.status] || '#999';
+                const sl = statusLabel[job.status] || job.status;
+
+                // Kopplade SOM-ordrar
+                const koppladeSom = somJobs.filter(s => s.ar_ordernr === job.ordernr && job.ordernr);
+                const somChips = koppladeSom.map(s => {
+                    const somSC = { utkast:'#9E9E9E', ny:'#00695C', sy:'#00897B', klar:'#2E7D32' };
+                    return `<span class="mont-som-chip" onclick="event.stopPropagation();switchTab('som');setTimeout(()=>editSomJob('${s.id}'),300)">
+                        <i class="bi bi-scissors"></i> ${s.ordernr || '–'} · ${s.status}
+                    </span>`;
+                }).join(' ');
+
+                // Bilagor
+                const bilagor = job.bilagor || [];
+                const bilagaChips = bilagor.map(b => {
+                    const isImg = b.type && b.type.startsWith('image/');
+                    const icon = isImg ? 'bi-image' : 'bi-file-earmark';
+                    if (isImg) {
+                        return `<a class="mont-bilaga-chip" href="${b.data}" target="_blank" onclick="event.stopPropagation()">
+                            <i class="bi ${icon}"></i> ${b.name || 'Bild'}
+                        </a>`;
+                    }
+                    return `<a class="mont-bilaga-chip" href="${b.data}" download="${b.name || 'fil'}" onclick="event.stopPropagation()">
+                        <i class="bi ${icon}"></i> ${b.name || 'Fil'}
+                    </a>`;
+                }).join(' ');
+
+                // Action-knappar beroende på status
+                let actionBtns = '';
+                if (job.status === 'bokad') {
+                    actionBtns = `
+                        <button class="mont-btn" style="background:#2E7D32;color:#fff" onclick="event.stopPropagation();montSetStatus('${job.id}','klar')">
+                            <i class="bi bi-check2-circle"></i> Markera klar
+                        </button>
+                        <button class="mont-btn" style="background:#E65100;color:#fff" onclick="event.stopPropagation();montSetStatus('${job.id}','atergång')">
+                            <i class="bi bi-arrow-return-left"></i> Återgång
+                        </button>`;
+                } else if (job.status === 'atergång') {
+                    actionBtns = `
+                        <button class="mont-btn" style="background:#1565C0;color:#fff" onclick="event.stopPropagation();montSetStatus('${job.id}','bokad')">
+                            <i class="bi bi-arrow-clockwise"></i> Återta till Bokad
+                        </button>`;
+                } else if (job.status === 'klar') {
+                    actionBtns = `
+                        <button class="mont-btn" style="background:#f0f0f0;color:#555" onclick="event.stopPropagation();montSetStatus('${job.id}','bokad')">
+                            <i class="bi bi-arrow-counterclockwise"></i> Ångra klar
+                        </button>`;
+                }
+
+                const coNames = (job.co_montorer || []).filter(n => n !== myName);
+                const coStr = coNames.length ? `<span style="font-size:0.78rem;color:#888;margin-left:0.4rem;">+ ${coNames.join(', ')}</span>` : '';
+
+                return `<div class="mont-card">
+                    <div class="mont-card-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                                <span style="font-weight:700;font-size:1rem;color:#1A3C5E;">${job.kund || job.ordernr || '–'}</span>
+                                <span style="background:${sc};color:${job.status==='utkast'?'#333':'#fff'};padding:0.15rem 0.55rem;border-radius:10px;font-size:0.72rem;font-weight:700;">${sl}</span>
+                                ${isOverdue ? '<span style="background:#ffebee;color:#c62828;padding:0.12rem 0.45rem;border-radius:8px;font-size:0.72rem;font-weight:700;">⚠ Försenad</span>' : ''}
+                            </div>
+                            <div style="margin-top:0.3rem;font-size:0.85rem;color:#555;">${job.ordernr || ''}${job.projekt ? ' · ' + job.projekt : ''}</div>
+                            ${job.startdatum ? `<div style="font-size:0.82rem;color:${isOverdue?'#c62828':'#888'};margin-top:0.15rem;"><i class="bi bi-calendar3"></i> ${job.startdatum}${job.bokadtid?' kl '+job.bokadtid:''}${job.slutdatum && job.slutdatum !== job.startdatum ? ' – ' + job.slutdatum : ''}</div>` : ''}
+                            ${coStr}
+                        </div>
+                        <i class="bi bi-chevron-down" style="color:#aaa;font-size:0.9rem;flex-shrink:0;"></i>
+                    </div>
+                    <div class="mont-card-body" style="display:none;">
+
+                        ${job.anteckningar ? `<div class="mont-section-title"><i class="bi bi-chat-text"></i> Anteckningar från Ali</div>
+                        <div style="background:#f9f9f9;border-radius:8px;padding:0.55rem 0.75rem;font-size:0.87rem;white-space:pre-wrap;">${job.anteckningar}</div>` : ''}
+
+                        ${job.avvikelse ? `<div class="mont-section-title" style="color:#c62828;"><i class="bi bi-exclamation-triangle"></i> Avvikelse</div>
+                        <div style="background:#fff3e0;border-radius:8px;padding:0.55rem 0.75rem;font-size:0.87rem;color:#e65100;white-space:pre-wrap;">${job.avvikelse}</div>` : ''}
+
+                        ${koppladeSom.length ? `<div class="mont-section-title"><i class="bi bi-scissors"></i> Kopplade sömnadsordrar</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${somChips}</div>` : ''}
+
+                        ${bilagor.length ? `<div class="mont-section-title"><i class="bi bi-paperclip"></i> Bilagor</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${bilagaChips}</div>` : ''}
+
+                        <div class="mont-section-title"><i class="bi bi-pencil-square"></i> Notera avvikelse</div>
+                        <textarea id="mont_avvik_${job.id}" rows="2" placeholder="Skriv avvikelse här..." style="width:100%;border:1px solid #ddd;border-radius:8px;padding:0.5rem 0.7rem;font-size:0.87rem;resize:none;">${job.avvikelse || ''}</textarea>
+                        <div style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
+                            <button class="mont-btn" style="background:#1565C0;color:#fff;font-size:0.8rem;" onclick="event.stopPropagation();montSaveAvvik('${job.id}')">
+                                <i class="bi bi-save"></i> Spara notering
+                            </button>
+                            ${actionBtns}
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            function montSection(icon, label, color, items) {
+                if (!items.length) return '';
+                return `<div style="margin-bottom:1.2rem;">
+                    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:${color};margin-bottom:0.5rem;">${icon} ${label} <span style="font-weight:400;color:#999;">(${items.length})</span></div>
+                    ${items.map(j => montCard(j)).join('')}
+                </div>`;
+            }
+
+            container.innerHTML = [
+                montSection('⚠️', 'Försenade', '#c62828', forsenade),
+                montSection('📅', 'Idag', '#1565C0', idag),
+                montSection('🌅', 'Imorgon', '#E65100', imorgon),
+                montSection('📆', 'Kommande', '#4527A0', kommande),
+                montSection('✅', 'Klara', '#2E7D32', klara),
+            ].join('') || '<div style="padding:3rem;text-align:center;color:#999;">Inga jobb att visa</div>';
+        }
+
+        async function montSetStatus(jobId, newStatus) {
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            job.status = newStatus;
+            await saveOrder('ar', job);
+            const labels = { klar:'Klar ✓', atergång:'Återgång markerad', bokad:'Återställd till Bokad' };
+            showToast(labels[newStatus] || `Status: ${newStatus}`);
+            await renderMontorVy();
+            // Uppdatera AR-vyn i bakgrunden om den är aktiv
+            if (currentTab === 'ar') await loadAndRenderArJobs();
+        }
+
+        async function montSaveAvvik(jobId) {
+            const ta = document.getElementById('mont_avvik_' + jobId);
+            if (!ta) return;
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            job.avvikelse = ta.value.trim();
+            await saveOrder('ar', job);
+            showToast('Notering sparad ✓');
+            await renderMontorVy();
         }
 
         // ============================================================================
