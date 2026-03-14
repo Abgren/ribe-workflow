@@ -518,9 +518,48 @@
             width:100%; min-width:0; background:white;
         }
         .matt-input:focus { border-color:#5e35b1; outline:none; }
-        .matt-input.prel  { background:#fff8e1; }
-        .matt-input.slut  { border-color:#b0bec5; }
-        .matt-input.slut:not([value=""]):not(:placeholder-shown) { background:#e8f5e9; font-weight:600; }
+        .matt-input[readonly] { cursor:pointer; background:#f8f6ff; }
+        .matt-input[readonly]:hover { background:#ede7f6; border-color:#9c69d4; }
+        .matt-input.has-val { background:#e8f5e9 !important; font-weight:700; color:#2e7d32; }
+        /* ── NUMPAD ──────────────────────────────────────────────────────── */
+        #mattNumpad { display:none; position:fixed; inset:0; z-index:2100;
+            background:rgba(0,0,0,0.5); align-items:flex-end; justify-content:center; }
+        #mattNumpad.open { display:flex; }
+        .numpad-inner {
+            background:white; border-radius:20px 20px 0 0;
+            padding:1.1rem 1rem 1.6rem; width:100%; max-width:440px;
+            box-shadow:0 -6px 32px rgba(0,0,0,0.22);
+        }
+        .numpad-display {
+            background:#f0eaff; border-radius:12px; padding:0.6rem 1.1rem;
+            font-size:2.4rem; font-weight:800; text-align:right;
+            color:#1A3C5E; margin-bottom:0.75rem; min-height:68px;
+            letter-spacing:2px; user-select:none; word-break:break-all;
+        }
+        .numpad-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.45rem; }
+        .numpad-btn {
+            background:white; border:1px solid #e0d8f5; border-radius:12px;
+            font-size:1.5rem; font-weight:600; padding:0.7rem 0.3rem;
+            cursor:pointer; color:#1A3C5E; user-select:none;
+            box-shadow:0 2px 5px rgba(94,53,177,0.08); transition:background 0.08s;
+            touch-action:manipulation;
+        }
+        .numpad-btn:active, .numpad-btn:focus { background:#ede7f6; outline:none; }
+        .numpad-btn-back  { background:#fce4ec; color:#c62828; border-color:#f8bbd0; }
+        .numpad-btn-clear { background:#fff3e0; color:#e65100; border-color:#ffe0b2; }
+        .numpad-btn-half  { background:#e8f5e9; color:#2e7d32; border-color:#c8e6c9; font-size:1rem; }
+        .numpad-btn-ok    { background:#5e35b1; color:white; border-color:#5e35b1; font-size:1.1rem; }
+        .numpad-btn-ok:active { background:#4527a0; }
+        #numpadTextInput {
+            width:100%; border:2px solid #5e35b1; border-radius:12px;
+            padding:0.85rem 1rem; font-size:1.5rem; font-weight:600;
+            color:#1A3C5E; outline:none; margin-bottom:0.75rem;
+        }
+        #numpadTextOk {
+            width:100%; background:#5e35b1; color:white; border:none;
+            border-radius:12px; padding:0.85rem; font-size:1.1rem;
+            font-weight:700; cursor:pointer;
+        }
         .matt-pos-nr {
             background:#5e35b1; color:white; border-radius:12px;
             padding:0.1rem 0.5rem; font-size:0.72rem; font-weight:700; white-space:nowrap;
@@ -1484,8 +1523,11 @@
                     <button class="matt-modal-btn" onclick="addMattPosition()" style="background:rgba(255,255,255,0.25);color:white;">
                         <i class="bi bi-plus-lg"></i> Position
                     </button>
-                    <button class="matt-modal-btn" onclick="saveMattModal()" style="background:#4CAF50;color:white;">
-                        <i class="bi bi-check-lg"></i> Spara &amp; stäng
+                    <button class="matt-modal-btn" onclick="saveMattModal(false)" style="background:rgba(255,255,255,0.18);color:white;">
+                        <i class="bi bi-floppy"></i> Spara
+                    </button>
+                    <button class="matt-modal-btn" onclick="saveMattModal(true)" style="background:#43A047;color:white;font-weight:700;">
+                        <i class="bi bi-check-circle-fill"></i> Slutmått
                     </button>
                     <button class="matt-modal-btn" onclick="closeMattModal()" style="background:rgba(255,255,255,0.1);color:white;font-size:1rem;padding:0.3rem 0.6rem;">
                         ✕
@@ -1498,14 +1540,13 @@
                         <thead>
                             <tr>
                                 <th style="width:32px;">#</th>
-                                <th style="min-width:80px;">Rum</th>
+                                <th style="min-width:90px;">Rum</th>
                                 <th style="min-width:110px;">Typ</th>
-                                <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
-                                <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
-                                <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
-                                <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
+                                <th style="min-width:70px;">Bredd<br><span style="font-weight:400;opacity:0.8;font-size:0.75em;">cm</span></th>
+                                <th style="min-width:70px;">Höjd<br><span style="font-weight:400;opacity:0.8;font-size:0.75em;">cm</span></th>
                                 <th style="min-width:75px;">Tak/Vägg</th>
-                                <th style="min-width:80px;">Skena</th>
+                                <th style="min-width:110px;">Skena</th>
+                                <th style="min-width:100px;">Övrigt</th>
                                 <th style="width:40px;">📷</th>
                                 <th style="width:28px;"></th>
                             </tr>
@@ -1516,6 +1557,49 @@
                 <div id="mattlistaEmpty" style="text-align:center;color:#bbb;padding:1.5rem;font-size:0.9rem;display:none;">
                     Inga positioner — klicka <strong>+ Position</strong> för att börja
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUMPAD OVERLAY (för Rum / Bredd / Höjd) -->
+    <div id="mattNumpad" onclick="if(event.target===this)closeNumpad(false)">
+        <div class="numpad-inner">
+            <!-- Numeriskt läge -->
+            <div id="numpadNumericPanel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                    <span id="numpadLabel" style="font-weight:700;color:#5e35b1;font-size:1.05rem;"></span>
+                    <button onclick="closeNumpad(false)" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;padding:0;">✕</button>
+                </div>
+                <div class="numpad-display" id="numpadDisplay">0</div>
+                <div class="numpad-grid">
+                    <button class="numpad-btn" onclick="numpadKey('7')">7</button>
+                    <button class="numpad-btn" onclick="numpadKey('8')">8</button>
+                    <button class="numpad-btn" onclick="numpadKey('9')">9</button>
+                    <button class="numpad-btn numpad-btn-back" onclick="numpadKey('back')">⌫</button>
+
+                    <button class="numpad-btn" onclick="numpadKey('4')">4</button>
+                    <button class="numpad-btn" onclick="numpadKey('5')">5</button>
+                    <button class="numpad-btn" onclick="numpadKey('6')">6</button>
+                    <button class="numpad-btn numpad-btn-clear" onclick="numpadKey('clear')">C</button>
+
+                    <button class="numpad-btn" onclick="numpadKey('1')">1</button>
+                    <button class="numpad-btn" onclick="numpadKey('2')">2</button>
+                    <button class="numpad-btn" onclick="numpadKey('3')">3</button>
+                    <button class="numpad-btn numpad-btn-half" onclick="numpadKey('half')" title="Lägg till ½ cm">+½</button>
+
+                    <button class="numpad-btn" onclick="numpadKey('0')" style="grid-column:span 2;">0</button>
+                    <button class="numpad-btn" onclick="numpadKey('.')">.</button>
+                    <button class="numpad-btn numpad-btn-ok" onclick="closeNumpad(true)">OK ✓</button>
+                </div>
+            </div>
+            <!-- Textläge (Rum) -->
+            <div id="numpadTextPanel" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                    <span id="numpadTextLabel" style="font-weight:700;color:#5e35b1;font-size:1.05rem;"></span>
+                    <button onclick="closeNumpad(false)" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;padding:0;">✕</button>
+                </div>
+                <input type="text" id="numpadTextInput" placeholder="Skriv rumsnamn...">
+                <button id="numpadTextOk" onclick="closeNumpad(true)">OK ✓</button>
             </div>
         </div>
     </div>
@@ -4150,10 +4234,12 @@
 
         const MATT_TYPER = ['Wave', 'Sydda glid', 'VB', 'Rullgardin', 'Plissé', 'Övrigt'];
 
+        const SKENA_PRESETS = ['Elit vit', 'Elit svart', '1080 vit', '1080 svart'];
+
         function _emptyMattPos() {
             return { id: 'mp_' + Date.now().toString(36) + Math.random().toString(36).slice(2),
-                     rum:'', typ:'Wave', bredd_prel:'', bredd_slut:'', hojd_prel:'', hojd_slut:'',
-                     tak_vagg:'Tak', skena:'', noter:'', foto:null };
+                     rum:'', typ:'Wave', bredd_slut:'', hojd_slut:'',
+                     tak_vagg:'Tak', skena:'', ovrigt:'', foto:null };
         }
 
         function getMattlistaStatus() {
@@ -4193,41 +4279,61 @@
             updateMattStatusBadge();
             if (!list.length) { tbody.innerHTML = ''; return; }
 
-            const typOpts = MATT_TYPER.map(t => `<option ${t==='Wave'?'selected':''}>${t}</option>`).join('');
-            const tvOpts  = ['Tak','Vägg'].map(o => `<option>${o}</option>`).join('');
-
             tbody.innerHTML = list.map((p, i) => {
-                const isDone = p.bredd_slut && p.hojd_slut;
-                const typSel = MATT_TYPER.map(t => `<option${p.typ===t?' selected':''}>${t}</option>`).join('');
-                const tvSel  = ['Tak','Vägg'].map(o => `<option${p.tak_vagg===o?' selected':''}>${o}</option>`).join('');
+                const isDone   = p.bredd_slut && p.hojd_slut;
+                const typSel   = MATT_TYPER.map(t => `<option value="${t}"${p.typ===t?' selected':''}>${t}</option>`).join('');
+                const tvSel    = ['Tak','Vägg'].map(o => `<option value="${o}"${p.tak_vagg===o?' selected':''}>${o}</option>`).join('');
+                const isPreset = SKENA_PRESETS.includes(p.skena);
+                const skenaSel = [
+                    `<option value="" ${!p.skena?'selected':''}>— Välj —</option>`,
+                    ...SKENA_PRESETS.map(v => `<option value="${v}" ${p.skena===v?'selected':''}>${v}</option>`),
+                    `<option value="_fritext" ${p.skena && !isPreset?'selected':''}>✏️ Fri text...</option>`
+                ].join('');
+                const friInput = (p.skena && !isPreset)
+                    ? `<input type="text" class="matt-input" style="margin-top:3px;font-size:0.78rem;"
+                            placeholder="Fri text..." value="${p.skena.replace(/"/g,'&quot;')}"
+                            oninput="window._mattlista[${i}].skena=this.value">`
+                    : '';
+                const fotoHtml = p.foto
+                    ? `<img src="${p.foto}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid #ddd;" onclick="window.open('${p.foto}','_blank')">`
+                    : `<label style="cursor:pointer;font-size:1.3rem;opacity:0.55;" title="Ta/välj foto">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="mattFotoSelect(${i},this)"></label>`;
+
                 return `<tr class="${isDone?'matt-done':''}" id="matt-row-${i}">
-                    <td><span class="matt-pos-nr">${i+1}</span></td>
-                    <td><input class="matt-input" placeholder="Rum" value="${p.rum||''}"
-                        oninput="window._mattlista[${i}].rum=this.value;updateMattStatusBadge()"></td>
-                    <td><select class="matt-input" onchange="window._mattlista[${i}].typ=this.value">
-                        ${typSel}</select></td>
-                    <td><input class="matt-input prel" type="number" step="0.5" placeholder="cm" value="${p.bredd_prel||''}"
-                        oninput="window._mattlista[${i}].bredd_prel=this.value;updateMattStatusBadge()"></td>
-                    <td><input class="matt-input slut" type="number" step="0.5" placeholder="—" value="${p.bredd_slut||''}"
-                        oninput="window._mattlista[${i}].bredd_slut=this.value;renderMattlista()"></td>
-                    <td><input class="matt-input prel" type="number" step="0.5" placeholder="cm" value="${p.hojd_prel||''}"
-                        oninput="window._mattlista[${i}].hojd_prel=this.value;updateMattStatusBadge()"></td>
-                    <td><input class="matt-input slut" type="number" step="0.5" placeholder="—" value="${p.hojd_slut||''}"
-                        oninput="window._mattlista[${i}].hojd_slut=this.value;renderMattlista()"></td>
-                    <td><select class="matt-input" onchange="window._mattlista[${i}].tak_vagg=this.value">${tvSel}</select></td>
-                    <td><input class="matt-input" placeholder="Typ skena" value="${p.skena||''}"
-                        oninput="window._mattlista[${i}].skena=this.value"></td>
-                    <td style="text-align:center">
-                        ${p.foto
-                            ? `<img src="${p.foto}" class="matt-foto-thumb" onclick="window.open('${p.foto}','_blank')" title="Öppna foto">`
-                            : `<label style="cursor:pointer;font-size:1.1rem;" title="Ta/välj foto">
-                                📷<input type="file" accept="image/*" capture="environment" style="display:none"
-                                    onchange="mattFotoSelect(${i},this)">
-                               </label>`
-                        }
+                    <td style="text-align:center;"><span class="matt-pos-nr">${i+1}</span></td>
+                    <td>
+                        <input class="matt-input" readonly placeholder="Rum..." value="${(p.rum||'').replace(/"/g,'&quot;')}"
+                            onclick="openMattPad('text','rum',${i},'Rum / Plats')">
                     </td>
-                    <td><button type="button" onclick="removeMattPosition(${i})"
-                        style="background:none;border:none;color:#cc0000;cursor:pointer;font-size:1.1rem;line-height:1;padding:0;">×</button></td>
+                    <td>
+                        <select class="matt-input" onchange="window._mattlista[${i}].typ=this.value">${typSel}</select>
+                    </td>
+                    <td>
+                        <input class="matt-input${p.bredd_slut?' has-val':''}" readonly placeholder="cm"
+                            value="${p.bredd_slut||''}"
+                            onclick="openMattPad('number','bredd_slut',${i},'Bredd (cm)')">
+                    </td>
+                    <td>
+                        <input class="matt-input${p.hojd_slut?' has-val':''}" readonly placeholder="cm"
+                            value="${p.hojd_slut||''}"
+                            onclick="openMattPad('number','hojd_slut',${i},'Höjd (cm)')">
+                    </td>
+                    <td>
+                        <select class="matt-input" onchange="window._mattlista[${i}].tak_vagg=this.value">${tvSel}</select>
+                    </td>
+                    <td>
+                        <select class="matt-input" onchange="mattSkenaSel(${i},this)">${skenaSel}</select>
+                        ${friInput}
+                    </td>
+                    <td>
+                        <input class="matt-input" type="text" placeholder="Övrigt..."
+                            value="${(p.ovrigt||'').replace(/"/g,'&quot;')}"
+                            oninput="window._mattlista[${i}].ovrigt=this.value">
+                    </td>
+                    <td style="text-align:center;">${fotoHtml}</td>
+                    <td>
+                        <button type="button" onclick="removeMattPosition(${i})"
+                            style="background:none;border:none;color:#cc0000;cursor:pointer;font-size:1.1rem;line-height:1;padding:0;">×</button>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -4255,6 +4361,77 @@
             reader.readAsDataURL(file);
         }
 
+        function mattSkenaSel(idx, sel) {
+            if (sel.value === '_fritext') {
+                window._mattlista[idx].skena = '';
+                renderMattlista();
+                // Fokusera fri-text-fältet som nyss renderades
+                const row = document.getElementById('matt-row-' + idx);
+                if (row) {
+                    const inp = row.querySelector('td:nth-child(7) input[type=text]');
+                    if (inp) { inp.focus(); }
+                }
+            } else {
+                window._mattlista[idx].skena = sel.value;
+                updateMattStatusBadge();
+            }
+        }
+
+        // ── Numpad ──────────────────────────────────────────────────────────
+        let _numpadCtx = null;   // { mode:'number'|'text', field, idx }
+        let _numpadVal = '';
+
+        function openMattPad(mode, field, idx, label) {
+            _numpadCtx = { mode, field, idx };
+            const numpad = document.getElementById('mattNumpad');
+            if (mode === 'number') {
+                _numpadVal = String(window._mattlista[idx][field] || '');
+                document.getElementById('numpadLabel').textContent = label;
+                document.getElementById('numpadDisplay').textContent = _numpadVal || '0';
+                document.getElementById('numpadNumericPanel').style.display = '';
+                document.getElementById('numpadTextPanel').style.display = 'none';
+            } else {
+                const textInput = document.getElementById('numpadTextInput');
+                textInput.value = window._mattlista[idx][field] || '';
+                document.getElementById('numpadTextLabel').textContent = label;
+                document.getElementById('numpadNumericPanel').style.display = 'none';
+                document.getElementById('numpadTextPanel').style.display = '';
+                setTimeout(() => textInput.focus(), 80);
+            }
+            numpad.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function numpadKey(k) {
+            if (k === 'back')  { _numpadVal = _numpadVal.slice(0, -1); }
+            else if (k === 'clear') { _numpadVal = ''; }
+            else if (k === '.') { if (!_numpadVal.includes('.')) _numpadVal += '.'; }
+            else if (k === 'half') {
+                const n = parseFloat(_numpadVal || '0');
+                _numpadVal = String(Math.round((n + 0.5) * 10) / 10);
+            } else {
+                if (_numpadVal === '0') _numpadVal = k;
+                else _numpadVal += k;
+            }
+            document.getElementById('numpadDisplay').textContent = _numpadVal || '0';
+        }
+
+        function closeNumpad(save) {
+            if (save && _numpadCtx) {
+                if (_numpadCtx.mode === 'number') {
+                    window._mattlista[_numpadCtx.idx][_numpadCtx.field] = _numpadVal;
+                } else {
+                    window._mattlista[_numpadCtx.idx][_numpadCtx.field] =
+                        document.getElementById('numpadTextInput').value;
+                }
+                renderMattlista();
+            }
+            document.getElementById('mattNumpad').classList.remove('open');
+            document.body.style.overflow = '';
+            _numpadCtx = null;
+            _numpadVal = '';
+        }
+
         function printMattlista() {
             const list  = window._mattlista || [];
             const ordernr = document.getElementById('som_ordernr')?.value || '–';
@@ -4267,15 +4444,13 @@
                     <td style="text-align:center;font-weight:700">${i+1}</td>
                     <td>${p.rum||''}</td>
                     <td>${p.typ||''}</td>
-                    <td style="background:#fff8e1;text-align:center">${p.bredd_prel||''}</td>
-                    <td style="border:1.5px solid #5e35b1;text-align:center;min-width:45px">${p.bredd_slut||''}</td>
-                    <td style="background:#fff8e1;text-align:center">${p.hojd_prel||''}</td>
-                    <td style="border:1.5px solid #5e35b1;text-align:center;min-width:45px">${p.hojd_slut||''}</td>
+                    <td style="border:1.5px solid #5e35b1;text-align:center;min-width:45px;font-weight:${p.bredd_slut?'bold':'400'}">${p.bredd_slut||''}</td>
+                    <td style="border:1.5px solid #5e35b1;text-align:center;min-width:45px;font-weight:${p.hojd_slut?'bold':'400'}">${p.hojd_slut||''}</td>
                     <td style="text-align:center">${p.tak_vagg||''}</td>
                     <td>${p.skena||''}</td>
-                    <td style="min-width:60px">${p.noter||''}</td>
+                    <td style="min-width:70px">${p.ovrigt||''}</td>
                 </tr>`).join('')
-              : '<tr><td colspan="10" style="text-align:center;color:#999;padding:1rem">Inga positioner</td></tr>';
+              : '<tr><td colspan="8" style="text-align:center;color:#999;padding:1rem">Inga positioner</td></tr>';
 
             const html = `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8">
             <title>Måttlista — ${ordernr}</title>
@@ -4288,13 +4463,9 @@
                 th { background: #5e35b1; color: white; padding: 2mm 1.5mm; font-size: 7.5pt; text-align: left; }
                 td { border: 0.3mm solid #ccc; padding: 1.8mm 1.5mm; }
                 tr:nth-child(even) td { background: #f9f9f9; }
-                .prel { background: #fff8e1 !important; }
-                .slut { border: 1mm solid #5e35b1 !important; font-weight: bold; }
-                .legend { margin-top: 5mm; font-size: 7.5pt; color: #666; display: flex; gap: 8mm; }
-                .legend span { display: inline-flex; align-items: center; gap: 2mm; }
-                .box-prel { display: inline-block; width: 8mm; height: 4mm; background: #fff8e1; border: 0.3mm solid #ccc; }
-                .box-slut { display: inline-block; width: 8mm; height: 4mm; border: 1mm solid #5e35b1; }
-                @media print { @page { margin: 10mm; } }
+                td.meas { border: 1mm solid #5e35b1; text-align: center; }
+                td.meas:empty { background: #f5f0ff; }
+                @media print { @page { margin: 10mm; size: A4 landscape; } }
             </style></head><body>
             <h2>Måttlista — ${ordernr}</h2>
             <div class="meta">
@@ -4306,21 +4477,16 @@
             <table>
                 <thead><tr>
                     <th style="width:20px">#</th>
-                    <th>Rum</th><th>Typ</th>
-                    <th class="prel" style="width:40px">Bredd<br>Prel</th>
-                    <th class="slut" style="width:40px">Bredd<br>Slut</th>
-                    <th class="prel" style="width:40px">Höjd<br>Prel</th>
-                    <th class="slut" style="width:40px">Höjd<br>Slut</th>
+                    <th>Rum</th>
+                    <th>Typ</th>
+                    <th class="meas" style="width:42px">Bredd</th>
+                    <th class="meas" style="width:42px">Höjd</th>
                     <th style="width:45px">Tak/Vägg</th>
                     <th>Skena</th>
-                    <th>Anteckningar</th>
+                    <th>Övrigt</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>
-            <div class="legend">
-                <span><span class="box-prel"></span> Preliminärt mått (förifyllt)</span>
-                <span><span class="box-slut"></span> Slutmått (fylls i på plats)</span>
-            </div>
             <script>window.onload=()=>{ window.print(); }<\/script>
             </body></html>`;
 
@@ -4369,7 +4535,7 @@
             document.body.style.overflow = '';
         }
 
-        async function saveMattModal() {
+        async function saveMattModal(close = true) {
             const jobId = window._mattModalJobId;
             if (!jobId) return;
             const jobs = await loadOrders('som');
@@ -4378,9 +4544,13 @@
             job.mattlista = JSON.parse(JSON.stringify(window._mattlista || []));
             const ok = await saveOrder('som', job);
             if (ok) {
-                showToast('📐 Måttlista sparad');
-                closeMattModal();
-                updateMattSomFormBadge();       // uppdatera badge i SOM-formuläret
+                if (close) {
+                    showToast('✅ Slutmått sparat!');
+                    closeMattModal();
+                    updateMattSomFormBadge();
+                } else {
+                    showToast('💾 Mått sparade');
+                }
                 if (currentTab === 'matt') await renderMattTab();
                 await loadAndRenderSomJobs();
             }
