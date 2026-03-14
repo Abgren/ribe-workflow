@@ -276,6 +276,14 @@
             padding: 1rem;
             overflow: hidden;
         }
+
+        /* BEST och Dagstavla har kolumn-layout och hanterar padding internt */
+        .tab-panel-best.active,
+        .tab-panel-dag.active {
+            flex-direction: column;
+            padding: 0;
+            gap: 0;
+        }
         
         .status-filter {
             display: flex;
@@ -961,7 +969,7 @@
             </div>
 
             <!-- BESTÄLLNINGAR TAB -->
-            <div class="tab-panel tab-panel-best" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+            <div class="tab-panel tab-panel-best">
                 <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.7rem;flex-wrap:wrap;gap:0.5rem;">
                         <div>
@@ -1000,7 +1008,7 @@
             </div>
 
             <!-- DAGSTAVLA TAB -->
-            <div class="tab-panel tab-panel-dag" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+            <div class="tab-panel tab-panel-dag">
                 <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:0.8rem;">
                     <div>
                         <div id="dagstavlaTitle" style="font-size:1.1rem;font-weight:700;color:#1A3C5E;"></div>
@@ -3020,11 +3028,13 @@
             const somJobs = isCoordinator ? allSomJobs : allSomJobs.filter(j => j.saljare  && matchNames.includes(j.saljare.toLowerCase()));
 
             // Dagstavlan-rubrik med användarens namn
-            const dagTitle = document.getElementById('dagstavlaTitle');
+            const dagTitle   = document.getElementById('dagstavlaTitle');
+            const dagSubtitle = document.getElementById('dagstavlaSubtitle');
             if (dagTitle) {
                 const possessive = myName.endsWith('s') ? `${myName}' dagstavla` : `${myName}s dagstavla`;
                 dagTitle.textContent = isCoordinator ? 'Dagstavla — alla ordrar' : possessive;
             }
+            if (dagSubtitle) dagSubtitle.textContent = 'Bara dina egna ordrar — sorterade på datum';
 
             // Categories
             const redoForLeverans = arJobs.filter(j => {
