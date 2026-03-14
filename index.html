@@ -315,10 +315,58 @@
         .tab-panel-dag.active,
         .tab-panel-mont.active,
         .tab-panel-fakt.active,
-        .tab-panel-atelje.active {
+        .tab-panel-atelje.active,
+        .tab-panel-matt.active {
             flex-direction: column;
             padding: 0;
             gap: 0;
+        }
+        /* ── MÅTTLISTA MODAL ───────────────────────────────────────────── */
+        #mattModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1060;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #mattModal.open { display: flex; }
+        .matt-modal-inner {
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1100px;
+            max-height: calc(100vh - 2rem);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+        .matt-modal-header {
+            background: #5e35b1;
+            color: white;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .matt-modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem 1.25rem;
+        }
+        .matt-modal-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
         }
 
         /* ── MONTÖR-VY ── */
@@ -1208,6 +1256,9 @@
             <button class="nav-link" id="tab-atelje" role="tab" data-tab="atelje" style="display:none;">
                 <i class="bi bi-scissors"></i> Atelje
             </button>
+            <button class="nav-link" id="tab-matt" role="tab" data-tab="matt" style="display:none;">
+                <i class="bi bi-rulers"></i> Måttlista
+            </button>
             <!-- Min vy-fliken borttagen — säljares utkast visas nu direkt i respektive sidebar -->
         </div>
 
@@ -1395,9 +1446,80 @@
             </div>
             <!-- MIN VY TAB (borttagen — säljares utkast visas i AR/SOM sidebar) -->
 
+            <!-- MÅTTLISTA-FLIK -->
+            <div class="tab-panel tab-panel-matt" id="mattPanel">
+                <div style="padding:0.75rem 1rem;background:white;border-bottom:1px solid #e8e8e8;display:flex;gap:0.6rem;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+                    <span style="font-size:1rem;font-weight:700;color:#5e35b1;"><i class="bi bi-rulers"></i> Måttlista</span>
+                    <input type="text" id="mattTabSearch" placeholder="🔍 Sök ordernr / kund / projekt..." oninput="renderMattTab()"
+                        style="flex:1;min-width:160px;max-width:320px;border:1px solid #ddd;border-radius:8px;padding:0.35rem 0.7rem;font-size:0.88rem;">
+                    <select id="mattTabFilter" onchange="renderMattTab()"
+                        style="border:1px solid #ddd;border-radius:8px;padding:0.35rem 0.6rem;font-size:0.85rem;background:white;">
+                        <option value="all">— Alla SOM-ordrar —</option>
+                        <option value="incomplete">📐 Saknar slutmått</option>
+                        <option value="complete">✅ Alla mått klara</option>
+                        <option value="none">🆕 Inga positioner ännu</option>
+                    </select>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:1rem;" id="mattTabContent">
+                    <div style="color:#bbb;text-align:center;padding:2rem;">Laddar...</div>
+                </div>
+            </div>
+
         </div>
     </div>
-    
+
+    <!-- MÅTTLISTA MODAL (fullskärms overlay) -->
+    <div id="mattModal" onclick="if(event.target===this)closeMattModal()">
+        <div class="matt-modal-inner">
+            <div class="matt-modal-header">
+                <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;flex:1;">
+                    <span style="font-size:1rem;font-weight:700;white-space:nowrap;"><i class="bi bi-rulers"></i> Måttlista</span>
+                    <span id="mattModalTitle" style="font-size:0.85rem;opacity:0.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                </div>
+                <div style="display:flex;gap:0.4rem;align-items:center;flex-shrink:0;">
+                    <span id="mattStatusBadge" style="font-size:0.78rem;"></span>
+                    <button class="matt-modal-btn" onclick="printMattlista()" style="background:rgba(255,255,255,0.15);color:white;">
+                        <i class="bi bi-printer"></i> Skriv ut
+                    </button>
+                    <button class="matt-modal-btn" onclick="addMattPosition()" style="background:rgba(255,255,255,0.25);color:white;">
+                        <i class="bi bi-plus-lg"></i> Position
+                    </button>
+                    <button class="matt-modal-btn" onclick="saveMattModal()" style="background:#4CAF50;color:white;">
+                        <i class="bi bi-check-lg"></i> Spara &amp; stäng
+                    </button>
+                    <button class="matt-modal-btn" onclick="closeMattModal()" style="background:rgba(255,255,255,0.1);color:white;font-size:1rem;padding:0.3rem 0.6rem;">
+                        ✕
+                    </button>
+                </div>
+            </div>
+            <div class="matt-modal-body">
+                <div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">
+                    <table class="matt-table" id="mattlistaTable">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;">#</th>
+                                <th style="min-width:80px;">Rum</th>
+                                <th style="min-width:110px;">Typ</th>
+                                <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
+                                <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
+                                <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
+                                <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
+                                <th style="min-width:75px;">Tak/Vägg</th>
+                                <th style="min-width:80px;">Skena</th>
+                                <th style="width:40px;">📷</th>
+                                <th style="width:28px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="mattlistaTbody"></tbody>
+                    </table>
+                </div>
+                <div id="mattlistaEmpty" style="text-align:center;color:#bbb;padding:1.5rem;font-size:0.9rem;display:none;">
+                    Inga positioner — klicka <strong>+ Position</strong> för att börja
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal for Beställning -->
     <div class="modal fade" id="bestModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-scrollable">
@@ -2004,9 +2126,18 @@
         function applyTabVisibility(name) {
             const isSyatelje = name === 'Syatelje';
             const isMont     = isMontor(name) && name !== 'Ali';
+            const isLinda    = name === 'Linda';
+            const isSaljare  = !isSyatelje && !isMont && !isLinda &&
+                                getSaljareForUser(name) !== '' && name !== '';
+
             // Atelje-fliken visas bara för Syatelje
             const tabAtelje = document.getElementById('tab-atelje');
             if (tabAtelje) tabAtelje.style.display = isSyatelje ? '' : 'none';
+
+            // Måttlista-fliken visas bara för säljare
+            const tabMatt = document.getElementById('tab-matt');
+            if (tabMatt) tabMatt.style.display = isSaljare ? '' : 'none';
+
             // Syatelje ser bara atelje-fliken — dölj övriga
             ['tab-ar','tab-som','tab-best','tab-fakt','tab-dag','tab-mont'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2057,6 +2188,8 @@
                 await renderFaktList();
             } else if (tab === 'atelje') {
                 await renderAteljeVy();
+            } else if (tab === 'matt') {
+                await renderMattTab();
             }
         }
         
@@ -3009,45 +3142,17 @@
                 </div>
 
                 <div class="form-section" style="margin-top:1rem;">
-                    <!-- MÅTTLISTA HEADER -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.6rem;">
-                        <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
                             <label class="form-label fw-semibold mb-0" style="color:#5e35b1;">
                                 <i class="bi bi-rulers"></i> Måttlista
                             </label>
-                            <span id="mattStatusBadge" style="font-size:0.75rem;color:#888;"></span>
+                            <span id="mattSomFormBadge" style="font-size:0.78rem;"></span>
                         </div>
-                        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
-                            <button type="button" onclick="printMattlista()" style="border:none;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.8rem;background:#f3e5f5;color:#5e35b1;cursor:pointer;font-weight:600;">
-                                <i class="bi bi-printer"></i> Skriv ut
-                            </button>
-                            <button type="button" onclick="addMattPosition()" style="border:none;border-radius:8px;padding:0.3rem 0.8rem;font-size:0.8rem;background:#5e35b1;color:white;cursor:pointer;font-weight:600;">
-                                <i class="bi bi-plus-lg"></i> Position
-                            </button>
-                        </div>
-                    </div>
-                    <div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">
-                        <table class="matt-table" id="mattlistaTable">
-                            <thead>
-                                <tr>
-                                    <th style="width:32px;">#</th>
-                                    <th style="min-width:80px;">Rum</th>
-                                    <th style="min-width:110px;">Typ</th>
-                                    <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
-                                    <th style="min-width:60px;">Bredd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
-                                    <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Prel</span></th>
-                                    <th style="min-width:60px;">Höjd<br><span style="font-weight:400;opacity:0.8">Slutlig</span></th>
-                                    <th style="min-width:75px;">Tak/Vägg</th>
-                                    <th style="min-width:80px;">Skena</th>
-                                    <th style="width:40px;">📷</th>
-                                    <th style="width:28px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="mattlistaTbody"></tbody>
-                        </table>
-                    </div>
-                    <div id="mattlistaEmpty" style="text-align:center;color:#bbb;padding:0.8rem;font-size:0.85rem;display:none;">
-                        Inga positioner — klicka <strong>+ Position</strong> för att börja
+                        <button type="button" onclick="openMattModal(currentEditingJobId)"
+                            style="border:none;border-radius:8px;padding:0.35rem 1rem;font-size:0.82rem;background:#5e35b1;color:white;cursor:pointer;font-weight:600;">
+                            <i class="bi bi-rulers"></i> Öppna måttlista
+                        </button>
                     </div>
                 </div>
 
@@ -3121,9 +3226,9 @@
                 });
             }
 
-            // Init måttlista
+            // Init måttlista (tabell visas i popup — uppdatera bara badge i formuläret)
             window._mattlista = JSON.parse(JSON.stringify(jobData.mattlista || []));
-            renderMattlista();
+            updateMattSomFormBadge();
 
             // Init sömnadsmoduler
             window._somModuler = JSON.parse(JSON.stringify(jobData.moduler || []));
@@ -4058,22 +4163,27 @@
             return { total: list.length, done };
         }
 
-        function updateMattStatusBadge() {
-            const badge = document.getElementById('mattStatusBadge');
-            const empty = document.getElementById('mattlistaEmpty');
-            const list  = window._mattlista || [];
-            if (!badge) return;
-            if (!list.length) {
-                badge.textContent = '';
-                if (empty) empty.style.display = 'block';
-                return;
-            }
-            if (empty) empty.style.display = 'none';
+        function _mattBadgeHtml(list) {
+            if (!list.length) return '';
             const done = list.filter(p => p.bredd_slut && p.hojd_slut).length;
             const allDone = done === list.length;
-            badge.innerHTML = allDone
+            return allDone
                 ? `<span style="background:#e8f5e9;color:#2e7d32;border-radius:10px;padding:0.1rem 0.55rem;font-weight:700;">✅ ${done}/${list.length} slutmått klara</span>`
                 : `<span style="background:#fff3e0;color:#e65100;border-radius:10px;padding:0.1rem 0.55rem;font-weight:600;">${done}/${list.length} slutmått</span>`;
+        }
+
+        function updateMattStatusBadge() {
+            const list  = window._mattlista || [];
+            const empty = document.getElementById('mattlistaEmpty');
+            if (empty) empty.style.display = list.length ? 'none' : 'block';
+            const badge = document.getElementById('mattStatusBadge');
+            if (badge) badge.innerHTML = _mattBadgeHtml(list);
+        }
+
+        function updateMattSomFormBadge() {
+            const badge = document.getElementById('mattSomFormBadge');
+            if (!badge) return;
+            badge.innerHTML = _mattBadgeHtml(window._mattlista || []);
         }
 
         function renderMattlista() {
@@ -4217,6 +4327,150 @@
             const w = window.open('', '_blank');
             w.document.write(html);
             w.document.close();
+        }
+
+        // ============================================================================
+        // MÅTTLISTA MODAL — popup-fönster
+        // ============================================================================
+
+        async function openMattModal(jobId) {
+            if (!jobId) { showToast('Spara sömnadsorder först'); return; }
+            // Om modalen anropas från SOM-formuläret medan det är öppet,
+            // använd redan inläst _mattlista (ordern är inte sparad ännu)
+            const existingJobId = currentEditingJobId;
+            if (jobId === existingJobId) {
+                // Använd pågående redigering — ordern är ev. inte sparad ännu
+                // window._mattlista är redan korrekt inläst
+            } else {
+                // Anrop från Måttlista-fliken — ladda från DB
+                const jobs = await loadOrders('som');
+                const job  = jobs.find(j => j.id === jobId);
+                if (!job) { showToast('Order ej hittad'); return; }
+                window._mattlista = JSON.parse(JSON.stringify(job.mattlista || []));
+            }
+            window._mattModalJobId = jobId;
+
+            // Hämta titel-info
+            let titleText = jobId;
+            try {
+                const jobs = await loadOrders('som');
+                const job  = jobs.find(j => j.id === jobId);
+                if (job) titleText = [job.ordernr, job.kund, job.projekt].filter(Boolean).join(' · ');
+            } catch(e) {}
+            document.getElementById('mattModalTitle').textContent = titleText;
+
+            renderMattlista();
+            document.getElementById('mattModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMattModal() {
+            document.getElementById('mattModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        async function saveMattModal() {
+            const jobId = window._mattModalJobId;
+            if (!jobId) return;
+            const jobs = await loadOrders('som');
+            const job  = jobs.find(j => j.id === jobId);
+            if (!job) { showToast('Order ej hittad'); return; }
+            job.mattlista = JSON.parse(JSON.stringify(window._mattlista || []));
+            const ok = await saveOrder('som', job);
+            if (ok) {
+                showToast('📐 Måttlista sparad');
+                closeMattModal();
+                updateMattSomFormBadge();       // uppdatera badge i SOM-formuläret
+                if (currentTab === 'matt') await renderMattTab();
+                await loadAndRenderSomJobs();
+            }
+        }
+
+        // ============================================================================
+        // MÅTTLISTA-FLIK
+        // ============================================================================
+
+        async function renderMattTab() {
+            const container = document.getElementById('mattTabContent');
+            if (!container) return;
+            container.innerHTML = '<div style="color:#bbb;text-align:center;padding:2rem;">Laddar...</div>';
+
+            const allJobs = await loadOrders('som');
+            const myName  = currentUser?.name || '';
+            const mySal   = getSaljareForUser(myName);
+            const matchNames = [myName, mySal].filter(Boolean).map(n => n.toLowerCase());
+
+            // Säljare ser bara sina egna SOM-ordrar
+            let jobs = allJobs.filter(j => j.status !== 'makulerad');
+            if (mySal || (!mySal && myName !== '' && myName !== 'Lilly' && myName !== 'Ali')) {
+                jobs = jobs.filter(j => j.saljare && matchNames.includes(j.saljare.toLowerCase()));
+            }
+
+            const search = (document.getElementById('mattTabSearch')?.value || '').toLowerCase();
+            const filter = document.getElementById('mattTabFilter')?.value || 'all';
+
+            if (search) {
+                jobs = jobs.filter(j =>
+                    (j.ordernr||'').toLowerCase().includes(search) ||
+                    (j.kund||'').toLowerCase().includes(search) ||
+                    (j.projekt||'').toLowerCase().includes(search));
+            }
+            if (filter === 'incomplete') jobs = jobs.filter(j => {
+                const ml = j.mattlista || [];
+                return ml.length > 0 && ml.some(p => !p.bredd_slut || !p.hojd_slut);
+            });
+            if (filter === 'complete') jobs = jobs.filter(j => {
+                const ml = j.mattlista || [];
+                return ml.length > 0 && ml.every(p => p.bredd_slut && p.hojd_slut);
+            });
+            if (filter === 'none') jobs = jobs.filter(j => !(j.mattlista || []).length);
+
+            if (!jobs.length) {
+                container.innerHTML = '<div style="color:#bbb;text-align:center;padding:2rem;font-size:0.95rem;">Inga sömnadsordrar hittades</div>';
+                return;
+            }
+
+            const SOM_SC = { utkast:'#9E9E9E', ny:'#1565C0', 'tyg anlänt':'#E65100', syr:'#6A1B9A', sy:'#6A1B9A', klar:'#2E7D32' };
+            const SOM_SL = { utkast:'Utkast', ny:'Ny', 'tyg anlänt':'Tyg anlänt', syr:'Syr', sy:'Syr', klar:'Klar' };
+
+            container.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                <thead>
+                    <tr style="background:#f5f5f5;">
+                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Order</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Kund / Projekt</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #ddd;">Status</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #ddd;">📐 Mått</th>
+                        <th style="padding:0.5rem 0.75rem;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #ddd;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                ${jobs.map(job => {
+                    const ml   = job.mattlista || [];
+                    const done = ml.filter(p => p.bredd_slut && p.hojd_slut).length;
+                    const allDone = ml.length > 0 && done === ml.length;
+                    const mattHtml = ml.length === 0
+                        ? '<span style="color:#bbb;font-size:0.8rem;">Inga positioner</span>'
+                        : allDone
+                            ? `<span style="background:#e8f5e9;color:#2e7d32;padding:0.1rem 0.55rem;border-radius:10px;font-weight:700;font-size:0.8rem;">✅ ${done}/${ml.length}</span>`
+                            : `<span style="background:#fff3e0;color:#e65100;padding:0.1rem 0.55rem;border-radius:10px;font-weight:600;font-size:0.8rem;">📐 ${done}/${ml.length}</span>`;
+                    return `<tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''" onclick="openMattModal('${job.id}')">
+                        <td style="padding:0.55rem 0.75rem;font-weight:700;color:#1A3C5E;">${job.ordernr || '–'}</td>
+                        <td style="padding:0.55rem 0.75rem;color:#444;">${[job.kund, job.projekt].filter(Boolean).join(' · ') || '–'}</td>
+                        <td style="padding:0.55rem 0.75rem;">
+                            <span style="background:${SOM_SC[job.status]||'#999'};color:white;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.75rem;font-weight:600;">${SOM_SL[job.status]||job.status}</span>
+                        </td>
+                        <td style="padding:0.55rem 0.75rem;text-align:center;">${mattHtml}</td>
+                        <td style="padding:0.55rem 0.75rem;text-align:center;">
+                            <button onclick="event.stopPropagation();openMattModal('${job.id}')"
+                                style="border:none;border-radius:8px;padding:0.25rem 0.7rem;font-size:0.78rem;background:#5e35b1;color:white;cursor:pointer;font-weight:600;">
+                                ✏️ Öppna
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('')}
+                </tbody>
+            </table>`;
         }
 
         // ============================================================================
