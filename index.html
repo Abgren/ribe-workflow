@@ -2181,19 +2181,57 @@
 
             const events = jobs
                 .filter(job => job.status !== 'utkast' && job.status !== 'ny' && job.status !== 'makulerad' && (job.startdatum || job.datum))
-                .map(job => {
+                .flatMap(job => {
                     const start = job.startdatum || job.datum;
                     const hasTime = job.bokadtid && start;
                     const eventStart = hasTime ? `${start}T${job.bokadtid}` : start;
+                    const ss = getArSomStatus(job, soms);
+                    const color = getStatusColor(job.status, 'ar');
+
+                    // Flerdagsjobb UTAN specifik tid → tvålager: bakgrund + kompakt chip
+                    const isMultiDay = !hasTime && job.slutdatum && job.slutdatum !== start;
+                    if (isMultiDay) {
+                        // FullCalendar end är exklusivt — lägg till 1 dag
+                        const endExcl = new Date(job.slutdatum);
+                        endExcl.setDate(endExcl.getDate() + 1);
+                        const endStr = endExcl.toISOString().split('T')[0];
+                        return [
+                            // Lager 1: bakgrundsfärg på alla berörda dagar
+                            {
+                                id: job.id + '_bg',
+                                start: start,
+                                end: endStr,
+                                display: 'background',
+                                backgroundColor: color + '55',  // 33% opacity
+                                extendedProps: { _isBg: true }
+                            },
+                            // Lager 2: kompakt chip enbart på startdagen
+                            {
+                                id: job.id,
+                                title: job.ordernr || job.kund || '',
+                                start: start,
+                                end: endStr,
+                                backgroundColor: color,
+                                borderColor: color,
+                                textColor: job.status === 'preliminar' ? '#333' : '#fff',
+                                extendedProps: {
+                                    montor: job.montor || '', somStatus: ss,
+                                    projekt: job.projekt || '', kund: job.kund || '',
+                                    ordernr: job.ordernr || '', slutdatum: job.slutdatum,
+                                    _isChip: true
+                                }
+                            }
+                        ];
+                    }
+
+                    // Enkeldagsjobb eller tidsatt → normalt block
                     let end;
                     if (hasTime && job.sluttid) {
                         end = `${start}T${job.sluttid}`;
                     } else if (job.slutdatum && job.slutdatum !== start) {
                         end = job.slutdatum;
                     }
-                    const ss = getArSomStatus(job, soms);
-                    const color = getStatusColor(job.status, 'ar');
-                    return {
+                    return [{
                         id: job.id,
                         title: job.ordernr || job.kund || '',
                         start: eventStart,
@@ -2202,9 +2240,9 @@
                         borderColor: color,
                         textColor: job.status === 'preliminar' ? '#333' : '#fff',
                         extendedProps: { montor: job.montor || '', somStatus: ss, projekt: job.projekt || '', kund: job.kund || '', ordernr: job.ordernr || '' }
-                    };
+                    }];
                 });
-            
+
             arCalendar.removeAllEvents();
             arCalendar.addEventSource(events);
         }
@@ -2616,8 +2654,11 @@
                 events: [],
                 editable: true,
                 eventDrop: async (info) => {
+                    if (info.event.extendedProps._isBg) { info.revert(); return; }
                     const jobs = await loadOrders('ar');
-                    const job = jobs.find(j => j.id === info.event.id);
+                    // strip '_bg' suffix if somehow triggered on bg twin
+                    const realId = info.event.id.replace(/_bg$/, '');
+                    const job = jobs.find(j => j.id === realId);
                     if (!job) { info.revert(); return; }
 
                     const startStr = info.event.startStr;
@@ -2645,8 +2686,10 @@
                     await loadAndRenderArJobs();
                 },
                 eventResize: async (info) => {
+                    if (info.event.extendedProps._isBg) { info.revert(); return; }
                     const jobs = await loadOrders('ar');
-                    const job = jobs.find(j => j.id === info.event.id);
+                    const realId = info.event.id.replace(/_bg$/, '');
+                    const job = jobs.find(j => j.id === realId);
                     if (!job) { info.revert(); return; }
 
                     const endStr = info.event.endStr;
@@ -2666,8 +2709,10 @@
                     await loadAndRenderArJobs();
                 },
                 eventClick: async (info) => {
+                    if (info.event.extendedProps._isBg) return;  // ignorera klick på bakgrundslager
+                    const realId = info.event.id;
                     const jobs = await loadOrders('ar');
-                    const job = jobs.find(j => j.id === info.event.id);
+                    const job = jobs.find(j => j.id === realId);
                     if (job) {
                         currentEditingJobId = job.id;
                         showArJobModal(job);
@@ -2675,6 +2720,7 @@
                 },
                 eventContent: (arg) => {
                     const ep = arg.event.extendedProps;
+                    if (ep._isBg) return;   // bakgrundslager har inget eget innehåll
                     const ss = ep.somStatus;
                     const sub = ep.projekt || ep.kund || '';
                     const timeStr = arg.timeText ? `<div style="font-size:0.68rem;opacity:0.8;line-height:1.2">${arg.timeText}</div>` : '';
@@ -2683,14 +2729,26 @@
                     if (ss?.allKlar) badge = `<span style="font-size:0.65rem;font-weight:700;background:rgba(255,255,255,0.25);border-radius:3px;padding:0 3px;margin-left:3px;vertical-align:middle">✓ Redo</span>`;
                     else if (ss?.count > 0) badge = `<span style="font-size:0.68rem;opacity:0.85;margin-left:2px">✂${ss.klarCount}/${ss.count}</span>`;
                     const montor = ep.montor ? `<div style="font-size:0.68rem;opacity:0.8;line-height:1.2">${ep.montor}</div>` : '';
+                    // Flerdagsjobb (chip): visa veckoindikator istf att fylla varje dag
+                    if (ep._isChip && ep.slutdatum) {
+                        const slutStr = ep.slutdatum ? ` → ${ep.slutdatum}` : '';
+                        return { html: `<div style="padding:2px 5px;overflow:hidden;height:100%;display:flex;align-items:center;gap:4px;">
+                            <span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ep.ordernr || arg.event.title}${badge}</span>
+                            ${sub ? `<span style="font-size:0.7rem;opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</span>` : ''}
+                            <span style="font-size:0.68rem;opacity:0.75;flex-shrink:0;margin-left:auto">📅${slutStr}</span>
+                            ${ep.montor ? `<span style="font-size:0.68rem;opacity:0.8;flex-shrink:0">${ep.montor}</span>` : ''}
+                        </div>` };
+                    }
                     return { html: `<div style="padding:2px 4px;overflow:hidden;height:100%">${timeStr}<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${ep.ordernr || arg.event.title}${badge}</div>${subStr}${montor}</div>` };
                 },
                 eventDidMount: (info) => {
+                    if (info.event.extendedProps._isBg) return;
                     info.el.style.cursor = 'grab';
                     const ep = info.event.extendedProps;
                     const ss = ep.somStatus;
                     const somTip = ss ? (ss.allKlar ? ' · ✓ Redo för leverans' : ` · Söm ${ss.klarCount}/${ss.count}`) : '';
-                    info.el.title = `${ep.ordernr || info.event.title}${ep.projekt ? ' · ' + ep.projekt : ''}${ep.kund ? ' · ' + ep.kund : ''}${ep.montor ? ' · ' + ep.montor : ''}${somTip}`;
+                    const slutTip = ep.slutdatum ? ` (${ep.slutdatum})` : '';
+                    info.el.title = `${ep.ordernr || info.event.title}${ep.projekt ? ' · ' + ep.projekt : ''}${ep.kund ? ' · ' + ep.kund : ''}${ep.montor ? ' · ' + ep.montor : ''}${somTip}${slutTip}`;
                 }
             });
             arCalendar.render();
