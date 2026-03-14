@@ -1061,7 +1061,7 @@
                     
                     <div>
                         <div style="font-size:0.8rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.4rem;" id="arSidebarLabel">Kommande ordrar</div>
-                        <select class="form-select form-select-sm mb-3" id="filterArStatus" style="border-color: var(--theme-primary); border-radius:8px;">
+                        <select class="form-select form-select-sm mb-3" id="filterArStatus" style="border-color: var(--theme-primary); border-radius:8px;" onchange="loadAndRenderArJobs()">
                             <option value="all">— Standard —</option>
                             <option value="utkast">Utkast</option>
                             <option value="ny">NY</option>
@@ -1069,6 +1069,7 @@
                             <option value="bokad">Bokad</option>
                             <option value="atergång">Återgång</option>
                             <option value="klar">Klar</option>
+                            <option value="makulerad">⛔ Makulerade</option>
                         </select>
 
                         <div class="kommande-list" id="kommande-ar"></div>
@@ -1106,6 +1107,7 @@
                             <option value="ny">NY</option>
                             <option value="sy">Sy</option>
                             <option value="klar">Klar</option>
+                            <option value="makulerad">⛔ Makulerade</option>
                         </select>
 
                         <div class="kommande-list" id="kommande-som"></div>
@@ -1826,7 +1828,11 @@
         }
 
         async function loadAndRenderArJobs() {
-            const [jobs, soms] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
+            const [allJobs, allSoms] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
+            // Visa makulerade bara om filtret explicit väljer dem
+            const arStatusFilter = document.getElementById('filterArStatus')?.value || 'all';
+            const jobs = arStatusFilter === 'makulerad' ? allJobs.filter(j => j.status === 'makulerad') : allJobs.filter(j => j.status !== 'makulerad');
+            const soms = allSoms.filter(j => j.status !== 'makulerad');
             window._cachedSoms = soms;
             renderArList(jobs, soms);
             updateArCalendar(jobs, soms);
@@ -1896,8 +1902,8 @@
                 return;
             }
 
-            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C' };
-            const SL = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar' };
+            const SC = { utkast:'#9E9E9E', ny:'#7B4FBE', preliminar:'#2196F3', bokad:'#1976D2', 'atergång':'#F57C00', klar:'#388E3C', makulerad:'#B71C1C' };
+            const SL = { utkast:'Utkast', ny:'NY', preliminar:'Prel.', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar', makulerad:'⛔ Mak.' };
             const AR_NEXT = { utkast:'ny', ny:'preliminar', preliminar:'bokad', bokad:'klar', 'atergång':'bokad' };
             const AR_PREV = { ny:'utkast', preliminar:'ny', bokad:'preliminar', klar:'bokad' };
             container.innerHTML = filtered.map(job => {
@@ -1931,7 +1937,7 @@
             if (!arCalendar) return;
 
             const events = jobs
-                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && (job.startdatum || job.datum))
+                .filter(job => job.status !== 'utkast' && job.status !== 'ny' && job.status !== 'makulerad' && (job.startdatum || job.datum))
                 .map(job => {
                     const start = job.startdatum || job.datum;
                     const hasTime = job.bokadtid && start;
@@ -2134,12 +2140,21 @@
             header.className = 'drawer-header';
             document.getElementById('drawerTitle').textContent = isNew ? 'Ny Arbetsorder' : `Arbetsorder ${jobData.ordernr || ''}`;
             document.getElementById('drawerBody').innerHTML = formHtml;
+            const arIsMakulerad = jobData.status === 'makulerad';
+            const arCanDelete   = jobData.status === 'utkast';
             document.getElementById('drawerFooter').innerHTML = `
                 <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
-                ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteArJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew && arIsMakulerad  ? `<button class="btn btn-outline-warning" onclick="reaktiveraArJob('${jobData.id}')"><i class="bi bi-arrow-counterclockwise"></i> Återaktivera</button>` : ''}
+                ${!isNew && arCanDelete    ? `<button class="btn btn-outline-danger" onclick="deleteArJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew && !arCanDelete && !arIsMakulerad ? `<button class="btn btn-outline-secondary" style="border-color:#B71C1C;color:#B71C1C;" onclick="makuleraArJob('${jobData.id}')"><i class="bi bi-x-circle"></i> Makulera</button>` : ''}
                 ${!isNew ? `<button class="btn btn-outline-secondary" onclick="generateArPdf('${jobData.id}')" style="border-color:#1565C0;color:#1565C0;"><i class="bi bi-printer"></i> Skriv ut</button>` : ''}
-                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-ar-primary);border-color:var(--color-ar-primary);">Spara</button>
+                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-ar-primary);border-color:var(--color-ar-primary);" ${arIsMakulerad ? 'disabled title="Makulerad order kan inte sparas"' : ''}>Spara</button>
             `;
+            // Banner för makulerade ordrar
+            if (arIsMakulerad) {
+                const body = document.getElementById('drawerBody');
+                body.insertAdjacentHTML('afterbegin', '<div style="background:#ffebee;color:#B71C1C;padding:0.6rem 1rem;border-radius:8px;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-x-octagon-fill"></i> Denna order är makulerad</div>');
+            }
             document.getElementById('saveJobBtn').onclick = () => saveArJob(jobData);
 
             // Status pill click listeners
@@ -2277,8 +2292,34 @@
         }
 
         async function deleteArJobFromDrawer(id) {
-            if (!confirm('Ta bort arbetsorder?')) return;
+            if (!confirm('Ta bort utkastet permanent?')) return;
             await deleteOrder('ar', id);
+            closeDrawer();
+            await loadAndRenderArJobs();
+        }
+
+        async function makuleraArJob(id) {
+            if (!confirm('Makulera ordern? Den raderas inte men markeras som ogiltig.')) return;
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+            job.status = 'makulerad';
+            job.makulerad_datum = new Date().toISOString().split('T')[0];
+            await saveOrder('ar', job);
+            showToast(`Order ${job.ordernr || ''} makulerad`);
+            closeDrawer();
+            await loadAndRenderArJobs();
+        }
+
+        async function reaktiveraArJob(id) {
+            if (!confirm('Återaktivera ordern som utkast?')) return;
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+            job.status = 'utkast';
+            delete job.makulerad_datum;
+            await saveOrder('ar', job);
+            showToast(`Order ${job.ordernr || ''} återaktiverad`);
             closeDrawer();
             await loadAndRenderArJobs();
         }
@@ -2414,7 +2455,12 @@
         // ============================================================================
         
         async function loadAndRenderSomJobs() {
-            const jobs = await loadOrders('som');
+            const allJobs = await loadOrders('som');
+            const somStatusFilter = document.getElementById('filterSomStatus')?.value || 'all';
+            // Visa makulerade bara om filtret explicit väljer dem
+            const jobs = somStatusFilter === 'makulerad'
+                ? allJobs.filter(j => j.status === 'makulerad')
+                : allJobs.filter(j => j.status !== 'makulerad');
             renderSomList(jobs);
             updateSomCalendar(jobs);
         }
@@ -2641,12 +2687,20 @@
             header.className = 'drawer-header som';
             document.getElementById('drawerTitle').textContent = isNew ? 'Ny Sömnadsorder' : `Sömnadsorder ${jobData.ordernr || ''}`;
             document.getElementById('drawerBody').innerHTML = formHtml;
+            const somIsMakulerad = jobData.status === 'makulerad';
+            const somCanDelete   = jobData.status === 'utkast';
             document.getElementById('drawerFooter').innerHTML = `
                 <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
-                ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteSomJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew && somIsMakulerad  ? `<button class="btn btn-outline-warning" onclick="reaktiveraSomJob('${jobData.id}')"><i class="bi bi-arrow-counterclockwise"></i> Återaktivera</button>` : ''}
+                ${!isNew && somCanDelete    ? `<button class="btn btn-outline-danger" onclick="deleteSomJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew && !somCanDelete && !somIsMakulerad ? `<button class="btn btn-outline-secondary" style="border-color:#B71C1C;color:#B71C1C;" onclick="makulerasSomJob('${jobData.id}')"><i class="bi bi-x-circle"></i> Makulera</button>` : ''}
                 ${!isNew ? `<button class="btn btn-outline-secondary" onclick="generateSomPdf(currentEditingJobId)" style="border-color:#00695C;color:#00695C;"><i class="bi bi-printer"></i> Skriv ut</button>` : ''}
-                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-som-primary);border-color:var(--color-som-primary);">Spara</button>
+                <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-som-primary);border-color:var(--color-som-primary);" ${somIsMakulerad ? 'disabled title="Makulerad order kan inte sparas"' : ''}>Spara</button>
             `;
+            if (somIsMakulerad) {
+                const body = document.getElementById('drawerBody');
+                body.insertAdjacentHTML('afterbegin', '<div style="background:#ffebee;color:#B71C1C;padding:0.6rem 1rem;border-radius:8px;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-x-octagon-fill"></i> Denna order är makulerad</div>');
+            }
             document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
 
             // Init SOM bilagor
@@ -2839,8 +2893,34 @@
         }
 
         async function deleteSomJobFromDrawer(id) {
-            if (!confirm('Ta bort sömnadsorder?')) return;
+            if (!confirm('Ta bort utkastet permanent?')) return;
             await deleteOrder('som', id);
+            closeDrawer();
+            await loadAndRenderSomJobs();
+        }
+
+        async function makulerasSomJob(id) {
+            if (!confirm('Makulera sömnadsorder? Den raderas inte men markeras som ogiltig.')) return;
+            const jobs = await loadOrders('som');
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+            job.status = 'makulerad';
+            job.makulerad_datum = new Date().toISOString().split('T')[0];
+            await saveOrder('som', job);
+            showToast(`Order ${job.ordernr || ''} makulerad`);
+            closeDrawer();
+            await loadAndRenderSomJobs();
+        }
+
+        async function reaktiveraSomJob(id) {
+            if (!confirm('Återaktivera sömnadsorder som utkast?')) return;
+            const jobs = await loadOrders('som');
+            const job = jobs.find(j => j.id === id);
+            if (!job) return;
+            job.status = 'utkast';
+            delete job.makulerad_datum;
+            await saveOrder('som', job);
+            showToast(`Order ${job.ordernr || ''} återaktiverad`);
             closeDrawer();
             await loadAndRenderSomJobs();
         }
@@ -3255,7 +3335,10 @@
                 return;   // linda's dagstavla klar
             }
 
-            const [allArJobs, allSomJobs] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
+            const [rawArJobs, rawSomJobs] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
+            // Exkludera makulerade från dagstavlan
+            const allArJobs  = rawArJobs.filter(j => j.status !== 'makulerad');
+            const allSomJobs = rawSomJobs.filter(j => j.status !== 'makulerad');
 
             // Filtrera på inloggad användare
             const myName = currentUser?.name || '';
@@ -3369,8 +3452,8 @@
 
             const [arJobs, somJobs] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
 
-            // Filtrera: jobb där användaren är primär montör eller medmontör
-            let mina = arJobs.filter(j => jobTillhorMontor(j, myName));
+            // Filtrera: jobb där användaren är primär montör eller medmontör (aldrig makulerade)
+            let mina = arJobs.filter(j => j.status !== 'makulerad' && jobTillhorMontor(j, myName));
             if (!visaKlara) mina = mina.filter(j => j.status !== 'klar');
 
             const title = document.getElementById('montTabTitle');
@@ -3542,7 +3625,7 @@
 
             const jobs = await loadOrders('ar');
 
-            // Alla klar-ordrar
+            // Alla klar-ordrar (makulerade ska aldrig faktureras)
             const klarJobs = jobs.filter(j => j.status === 'klar');
 
             // Uppdatera badge i nav-fliken
@@ -4137,9 +4220,10 @@
             fn('Godkänd för F-skatt', 80, pH - 9, 8);
             doc.setTextColor(0);
 
-            doc.save(`bestellning_${ordernr}.pdf`);
+            doc.autoPrint();
+            window.open(doc.output('bloburl'), '_blank');
             await saveBestOrder();
-            showToast('PDF genererad — status satt till Skickad');
+            showToast('Öppnar utskrift — status satt till Skickad');
         }
 
         // ============================================================================
@@ -4268,8 +4352,9 @@
             fn('www.ribegardin.se', mL, pH-12, 7);
             fn(`Utskriven: ${new Date().toLocaleDateString('sv-SE')}`, mR, pH-12, 7);
 
-            doc.save(`arbetsorder_${job.ordernr || job.id}.pdf`);
-            showToast('PDF skapad ✓');
+            doc.autoPrint();
+            window.open(doc.output('bloburl'), '_blank');
+            showToast('Öppnar utskrift ✓');
         }
 
         // ============================================================================
@@ -4400,8 +4485,9 @@
             fn('www.ribegardin.se', mL, pH-12, 7);
             fn(`Utskriven: ${new Date().toLocaleDateString('sv-SE')}`, mR, pH-12, 7);
 
-            doc.save(`somanadsorder_${job.ordernr || job.id}.pdf`);
-            showToast('PDF skapad ✓');
+            doc.autoPrint();
+            window.open(doc.output('bloburl'), '_blank');
+            showToast('Öppnar utskrift ✓');
         }
 
         async function deleteBestOrder() {
