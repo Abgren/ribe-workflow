@@ -961,18 +961,32 @@
             </div>
 
             <!-- BESTÄLLNINGAR TAB -->
-            <div class="tab-panel tab-panel-best">
-                <div style="width: 100%; padding: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h4 style="margin: 0; color: var(--theme-primary);">Beställningar</h4>
-                        <button class="btn btn-custom" id="newBestBtn" style="background: var(--theme-primary); color: white;">
-                            <i class="bi bi-plus-circle"></i> Ny beställning
-                        </button>
+            <div class="tab-panel tab-panel-best" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+                <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.7rem;flex-wrap:wrap;gap:0.5rem;">
+                        <div>
+                            <div id="bestTabTitle" style="font-size:1.1rem;font-weight:700;color:#1A3C5E;">Beställningar</div>
+                            <div id="bestTabSubtitle" style="font-size:0.8rem;color:#999;display:none;">Godsmottagning — sorterat på förväntat levdatum</div>
+                        </div>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <div id="bestViewToggle" style="display:none;background:#f0f0f0;border-radius:20px;padding:2px;display:none;">
+                                <button id="bestViewTableBtn" onclick="setBestView('table')"
+                                    style="border:none;border-radius:18px;padding:0.25rem 0.9rem;font-size:0.8rem;font-weight:600;cursor:pointer;background:#1565C0;color:#fff;">
+                                    <i class="bi bi-table"></i> Tabell
+                                </button>
+                                <button id="bestViewInlevBtn" onclick="setBestView('inleverans')"
+                                    style="border:none;border-radius:18px;padding:0.25rem 0.9rem;font-size:0.8rem;font-weight:600;cursor:pointer;background:transparent;color:#555;">
+                                    <i class="bi bi-box-arrow-in-down"></i> Inleverans
+                                </button>
+                            </div>
+                            <button class="btn btn-custom" id="newBestBtn" style="background:var(--theme-primary);color:white;">
+                                <i class="bi bi-plus-circle"></i> Ny beställning
+                            </button>
+                        </div>
                     </div>
-
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                        <input type="text" class="form-control" id="bestSearchInput" placeholder="Sök ordernr..." style="max-width: 300px;">
-                        <select class="form-select form-select-sm" id="filterBestStatus" style="max-width:200px; border-color: var(--theme-primary); border-radius:8px;">
+                    <div id="bestFilterBar" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <input type="text" class="form-control" id="bestSearchInput" placeholder="Sök ordernr/leverantör..." style="max-width:280px;">
+                        <select class="form-select form-select-sm" id="filterBestStatus" style="max-width:200px;border-color:var(--theme-primary);border-radius:8px;">
                             <option value="all">— Alla statusar —</option>
                             <option value="oppen">Öppen</option>
                             <option value="skickad">Skickad</option>
@@ -981,9 +995,8 @@
                             <option value="avbruten">Avbruten</option>
                         </select>
                     </div>
-
-                    <div id="bestTableContainer"></div>
                 </div>
+                <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="bestTableContainer"></div>
             </div>
 
             <!-- DAGSTAVLA TAB -->
@@ -991,7 +1004,7 @@
                 <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:0.8rem;">
                     <div>
                         <div id="dagstavlaTitle" style="font-size:1.1rem;font-weight:700;color:#1A3C5E;"></div>
-                        <div style="font-size:0.8rem;color:#999;">Bara dina egna ordrar — sorterade på datum</div>
+                        <div id="dagstavlaSubtitle" style="font-size:0.8rem;color:#999;">Bara dina egna ordrar — sorterade på datum</div>
                     </div>
                 </div>
                 <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="dagstavlaContainer"></div>
@@ -1874,6 +1887,7 @@
             document.getElementById('drawerFooter').innerHTML = `
                 <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
                 ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteArJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew ? `<button class="btn btn-outline-secondary" onclick="generateArPdf('${jobData.id}')" style="border-color:#1565C0;color:#1565C0;"><i class="bi bi-printer"></i> Skriv ut</button>` : ''}
                 <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-ar-primary);border-color:var(--color-ar-primary);">Spara</button>
             `;
             document.getElementById('saveJobBtn').onclick = () => saveArJob(jobData);
@@ -1998,6 +2012,17 @@
                     <i class="bi bi-paperclip" style="color:#666;"></i>
                     <span style="flex:1;font-size:0.9rem;">${f.name}</span>
                     <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                </div>`).join('');
+        }
+
+        function removeSomFile(idx) {
+            window._somPendingFiles.splice(idx, 1);
+            const list = document.getElementById('som_filelist');
+            list.innerHTML = window._somPendingFiles.map((f,i) =>
+                `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                    <i class="bi bi-paperclip" style="color:#666;"></i>
+                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                    <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
                 </div>`).join('');
         }
 
@@ -2342,8 +2367,24 @@
                     <label class="form-label">Anteckningar</label>
                     <textarea class="form-control som-field" id="som_anteckningar" rows="3" placeholder="Noteringar...">${jobData.anteckningar || ''}</textarea>
                 </div>
+
+                <div class="form-section" style="margin-top:1rem;">
+                    <label class="form-label fw-semibold"><i class="bi bi-paperclip"></i> Bilagor</label>
+                    <div id="som_filelist" style="margin-bottom:0.5rem;">
+                        ${(jobData.bilagor || []).map((f,i) => `
+                        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                            <i class="bi bi-paperclip" style="color:#666;"></i>
+                            <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                            <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                        </div>`).join('')}
+                    </div>
+                    <label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;background:#f8f8f8;border:1px dashed #bbb;border-radius:8px;padding:0.4rem 0.8rem;font-size:0.85rem;color:#555;">
+                        <i class="bi bi-upload"></i> Lägg till fil
+                        <input type="file" id="som_fileInput" multiple accept="image/*,.pdf" style="display:none;">
+                    </label>
+                </div>
             `;
-            
+
             // Öppna i drawer
             const header = document.getElementById('drawerHeader');
             header.className = 'drawer-header som';
@@ -2352,9 +2393,35 @@
             document.getElementById('drawerFooter').innerHTML = `
                 <button class="btn btn-outline-secondary" onclick="closeDrawer()">Avbryt</button>
                 ${!isNew ? `<button class="btn btn-outline-danger" onclick="deleteSomJobFromDrawer('${jobData.id}')"><i class="bi bi-trash"></i> Ta bort</button>` : ''}
+                ${!isNew ? `<button class="btn btn-outline-secondary" onclick="generateSomPdf(currentEditingJobId)" style="border-color:#00695C;color:#00695C;"><i class="bi bi-printer"></i> Skriv ut</button>` : ''}
                 <button class="btn btn-primary" id="saveJobBtn" style="background:var(--color-som-primary);border-color:var(--color-som-primary);">Spara</button>
             `;
             document.getElementById('saveJobBtn').onclick = () => saveSomJob(jobData);
+
+            // Init SOM bilagor
+            window._somPendingFiles = jobData.bilagor ? [...jobData.bilagor] : [];
+            const somFileInput = document.getElementById('som_fileInput');
+            if (somFileInput) {
+                somFileInput.addEventListener('change', e => {
+                    const files = Array.from(e.target.files);
+                    const promises = files.map(f => new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = ev => resolve({ name: f.name, size: f.size, data: ev.target.result });
+                        reader.readAsDataURL(f);
+                    }));
+                    Promise.all(promises).then(results => {
+                        window._somPendingFiles = (window._somPendingFiles || []).concat(results);
+                        const list = document.getElementById('som_filelist');
+                        list.innerHTML = window._somPendingFiles.map((f,i) =>
+                            `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
+                                <i class="bi bi-paperclip" style="color:#666;"></i>
+                                <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                                <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                            </div>`
+                        ).join('');
+                    });
+                });
+            }
 
             // Init sömnadsmoduler
             window._somModuler = JSON.parse(JSON.stringify(jobData.moduler || []));
@@ -2549,6 +2616,7 @@
                 leveranstid: document.getElementById('som_leveranstid')?.value || '08:00',
                 anteckningar: document.getElementById('som_anteckningar').value,
                 moduler: JSON.parse(JSON.stringify(window._somModuler || [])),
+                bilagor: window._somPendingFiles || [],
                 status
             };
 
@@ -2624,60 +2692,211 @@
         // BESTÄLLNINGAR (BEST) FUNCTIONS
         // ============================================================================
         
-        async function renderBestTable() {
+        // Linda = inleverans-läge som standard
+        let bestViewMode = 'table';
+
+        function setBestView(mode) {
+            bestViewMode = mode;
+            _updateBestViewUI();
+            renderBestTable();
+        }
+
+        function _updateBestViewUI() {
+            const mode  = bestViewMode;
+            const tBtn  = document.getElementById('bestViewTableBtn');
+            const iBtn  = document.getElementById('bestViewInlevBtn');
+            if (tBtn && iBtn) {
+                tBtn.style.background = mode === 'table'       ? '#1565C0'    : 'transparent';
+                tBtn.style.color      = mode === 'table'       ? '#fff'       : '#555';
+                iBtn.style.background = mode === 'inleverans'  ? '#1565C0'    : 'transparent';
+                iBtn.style.color      = mode === 'inleverans'  ? '#fff'       : '#555';
+            }
+            const filterBar = document.getElementById('bestFilterBar');
+            if (filterBar) filterBar.style.display = mode === 'inleverans' ? 'none' : 'flex';
+            const subtitle  = document.getElementById('bestTabSubtitle');
+            if (subtitle)   subtitle.style.display  = mode === 'inleverans' ? 'block' : 'none';
+        }
+
+        async function quickReceiveBest(bestId, newStatus) {
             const jobs = await loadOrders('best');
+            const job  = jobs.find(j => j.id === bestId);
+            if (!job) return;
+            const today = new Date().toISOString().split('T')[0];
+            job.status  = newStatus;
+            if (newStatus === 'levererad' || newStatus === 'dellevererad') job.mottagen = today;
+            await saveOrder('best', job);
+
+            // Om fullt levererad — uppdatera länkad SOM-order automatiskt
+            if (newStatus === 'levererad' && job.som_ordernr) {
+                const somJobs = await loadOrders('som');
+                const linked  = somJobs.find(s => s.ordernr === job.som_ordernr);
+                if (linked && linked.status === 'ny') {
+                    linked.status = 'sy';
+                    await saveOrder('som', linked);
+                    sendNotif('📦 Tyg mottaget', `${job.leverantor} → ${job.som_ordernr} — redo att sys`);
+                    showToast(`Tyg mottaget! ${job.som_ordernr} är nu "Syr" 🧵`);
+                } else {
+                    showToast(`Beställning levererad ✓`);
+                }
+                await loadAndRenderSomJobs();
+            } else if (newStatus === 'dellevererad') {
+                showToast(`Delleverans registrerad ✓`);
+            } else {
+                showToast(`Status uppdaterad`);
+            }
+            await renderBestTable();
+        }
+
+        async function renderBestTable() {
+            const jobs      = await loadOrders('best');
             const container = document.getElementById('bestTableContainer');
-            const searchText = document.getElementById('bestSearchInput').value.toLowerCase();
-            
+            const today     = new Date().toISOString().split('T')[0];
+            const tomorrow  = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+            const weekLater = new Date(Date.now() + 7*86400000).toISOString().split('T')[0];
+
+            // Initiera vy-läge baserat på inloggad användare
+            const isLinda = currentUser?.name === 'Linda';
+            if (isLinda && bestViewMode === 'table' && !window._bestViewInitialized) {
+                bestViewMode = 'inleverans';
+                window._bestViewInitialized = true;
+            }
+            // Visa toggle för Linda
+            const toggleEl = document.getElementById('bestViewToggle');
+            if (toggleEl && isLinda) toggleEl.style.display = 'flex';
+            _updateBestViewUI();   // uppdaterar knapp-styling + filterBar-synlighet
+
+            // ── INLEVERANS-VY ──────────────────────────────────────────────
+            if (bestViewMode === 'inleverans') {
+                // Visa bara aktiva (inte avbruten/levererad)
+                const active = jobs.filter(j => !['levererad','avbruten'].includes(j.status));
+
+                const forsenade   = active.filter(j => j.levdatum && j.levdatum < today);
+                const idag        = active.filter(j => j.levdatum === today);
+                const imorgon     = active.filter(j => j.levdatum === tomorrow);
+                const dennaVecka  = active.filter(j => j.levdatum > tomorrow && j.levdatum <= weekLater);
+                const kommande    = active.filter(j => !j.levdatum || j.levdatum > weekLater);
+
+                const btnS = 'border:none;border-radius:8px;padding:0.25rem 0.75rem;font-size:0.76rem;font-weight:600;cursor:pointer;';
+
+                function inlevCard(b) {
+                    const isOverdue  = b.levdatum && b.levdatum < today;
+                    const artikelStr = (b.artiklar || []).map(a => a.beskrivning || a.tyg || '').filter(Boolean).slice(0,2).join(', ');
+                    const receiveBtn = (b.status === 'skickad' || b.status === 'oppen')
+                        ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">
+                               <i class="bi bi-box-arrow-in-down"></i> Ta emot
+                           </button>
+                           <button style="${btnS}background:#7E57C2;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','dellevererad')">
+                               ~ Del.lev
+                           </button>`
+                        : b.status === 'dellevererad'
+                        ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">
+                               <i class="bi bi-check2-all"></i> Fullt mottagen
+                           </button>`
+                        : '';
+                    return `
+                    <div onclick="showBestModal('${b.id}')" style="background:#fff;border:1px solid #e4e4e4;
+                        border-left:4px solid ${isOverdue ? '#c62828' : getPillColor(b.status)};
+                        border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.6rem;cursor:pointer;
+                        transition:box-shadow 0.15s;"
+                        onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.09)'"
+                        onmouseout="this.style.boxShadow='none'">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:700;font-size:0.95rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                                    <i class="bi bi-truck"></i> ${b.leverantor || '–'}
+                                    <span style="background:${getPillColor(b.status)};color:#fff;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.68rem;font-weight:600;">${getStatusLabel(b.status)}</span>
+                                    ${isOverdue ? `<span style="background:#FFEBEE;color:#c62828;border:1px solid #EF9A9A;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.68rem;font-weight:700;">⚠ FÖRSENAD</span>` : ''}
+                                </div>
+                                <div style="font-size:0.82rem;color:#555;margin-top:0.2rem;">${[b.ordernr, b.som_ordernr ? `↔ ${b.som_ordernr}` : ''].filter(Boolean).join(' · ')}</div>
+                                ${artikelStr ? `<div style="font-size:0.78rem;color:#888;margin-top:0.1rem;"><i class="bi bi-scissors"></i> ${artikelStr}</div>` : ''}
+                            </div>
+                            <div style="text-align:right;white-space:nowrap;">
+                                ${b.levdatum ? `<div style="font-size:0.82rem;font-weight:600;color:${isOverdue ? '#c62828' : '#1565C0'}"><i class="bi bi-calendar3"></i> ${b.levdatum}</div>` : '<div style="font-size:0.78rem;color:#aaa;">Inget lev.datum</div>'}
+                                ${b.mottagen ? `<div style="font-size:0.72rem;color:#888;">Mottagen: ${b.mottagen}</div>` : ''}
+                            </div>
+                        </div>
+                        ${receiveBtn ? `<div style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;">${receiveBtn}</div>` : ''}
+                    </div>`;
+                }
+
+                function inlevSection(icon, label, color, items) {
+                    if (!items.length) return '';
+                    return `<div style="margin-bottom:1.5rem;">
+                        <div style="font-size:0.85rem;font-weight:700;color:${color};border-bottom:2px solid #f0f0f0;
+                            padding-bottom:0.4rem;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem;">
+                            ${icon} ${label}
+                            <span style="margin-left:auto;background:#f0f0f0;color:#666;border-radius:10px;padding:0.1rem 0.5rem;font-size:0.75rem;">${items.length}</span>
+                        </div>
+                        ${items.map(b => inlevCard(b)).join('')}
+                    </div>`;
+                }
+
+                container.innerHTML = [
+                    inlevSection('⚠️', 'Försenade', '#c62828', forsenade),
+                    inlevSection('📅', 'Idag', '#1565C0', idag),
+                    inlevSection('🌅', 'Imorgon', '#E65100', imorgon),
+                    inlevSection('📆', 'Denna vecka', '#4527A0', dennaVecka),
+                    inlevSection('📬', 'Kommande / Inget datum', '#555', kommande),
+                ].join('') || '<div style="text-align:center;padding:3rem;color:#aaa;"><i class="bi bi-box-seam" style="font-size:2.5rem;display:block;margin-bottom:0.8rem;"></i>Inga aktiva beställningar ✓</div>';
+                return;
+            }
+
+            // ── TABELL-VY ─────────────────────────────────────────────────
+            const searchText = document.getElementById('bestSearchInput')?.value.toLowerCase() || '';
             let filtered = jobs;
-            
             if (currentBestFilter !== 'all') {
                 filtered = filtered.filter(j => j.status === currentBestFilter);
             }
-            
             if (searchText) {
-                filtered = filtered.filter(j => 
-                    (j.ordernr || '').toLowerCase().includes(searchText)
+                filtered = filtered.filter(j =>
+                    (j.ordernr || '').toLowerCase().includes(searchText) ||
+                    (j.leverantor || '').toLowerCase().includes(searchText)
                 );
             }
-            
             if (filtered.length === 0) {
-                container.innerHTML = '<p style="padding: 2rem; text-align: center; color: #999;">Inga beställningar</p>';
+                container.innerHTML = '<p style="padding:2rem;text-align:center;color:#999;">Inga beställningar</p>';
                 return;
             }
-            
-            const html = `
+
+            const btnS = 'border:none;border-radius:7px;padding:0.18rem 0.6rem;font-size:0.7rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+            container.innerHTML = `
                 <table class="best-table">
                     <thead>
                         <tr>
                             <th>Best.nr</th>
-                            <th>Order.nr</th>
-                            <th>Best.datum</th>
                             <th>Leverantör</th>
-                            <th style="width:70px;text-align:center;">Status</th>
                             <th>Lev.datum</th>
+                            <th style="text-align:center;">Status</th>
+                            <th>SOM-koppling</th>
                             <th>Projekt</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${filtered.map(b => `
-                            <tr onclick="showBestModal('${b.id}')">
+                        ${filtered.map(b => {
+                            const overdue = b.levdatum && b.levdatum < today && !['levererad','avbruten'].includes(b.status);
+                            const quickBtns = (b.status === 'skickad' || b.status === 'oppen')
+                                ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">✓ Ta emot</button>
+                                   <button style="${btnS}background:#7E57C2;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','dellevererad')">~ Del</button>`
+                                : b.status === 'dellevererad'
+                                ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">✓ Fullt mottagen</button>`
+                                : '';
+                            return `<tr onclick="showBestModal('${b.id}')" style="${overdue ? 'background:#FFF5F5;' : ''}">
                                 <td><strong>${b.ordernr}</strong></td>
-                                <td>${b.ordnr || '-'}</td>
-                                <td>${b.datum || '-'}</td>
                                 <td>${b.leverantor || '-'}</td>
+                                <td style="color:${overdue ? '#c62828' : 'inherit'};font-weight:${overdue ? '700' : '400'};">
+                                    ${b.levdatum || '-'} ${overdue ? '<span style="font-size:0.7rem;">⚠</span>' : ''}
+                                </td>
                                 <td style="text-align:center;">
                                     <span style="display:inline-block;background:${getPillColor(b.status)};color:white;font-size:0.72rem;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;">${getStatusLabel(b.status)}</span>
                                 </td>
-                                <td>${b.levdatum || '-'}</td>
+                                <td>${b.som_ordernr ? `<span style="font-size:0.8rem;color:#00695C;">↔ ${b.som_ordernr}</span>` : '-'}</td>
                                 <td>${b.projekt || '-'}</td>
-                            </tr>
-                        `).join('')}
+                                <td onclick="event.stopPropagation()" style="white-space:nowrap;">${quickBtns}</td>
+                            </tr>`;
+                        }).join('')}
                     </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = html;
+                </table>`;
         }
         
         function getPillColor(status) {
@@ -2708,9 +2927,76 @@
             if (!container) return;
             container.innerHTML = '<div style="color:#999;padding:1rem">Laddar...</div>';
 
-            const today = new Date().toISOString().split('T')[0];
-            const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+            const today     = new Date().toISOString().split('T')[0];
+            const tomorrow  = new Date(Date.now() + 86400000).toISOString().split('T')[0];
             const weekLater = new Date(Date.now() + 7*86400000).toISOString().split('T')[0];
+
+            // ── LINDAS INLEVERANS-DAGSTAVLA ───────────────────────────────
+            if (currentUser?.name === 'Linda') {
+                const dagTitle = document.getElementById('dagstavlaTitle');
+                const subtitle = document.getElementById('dagstavlaSubtitle');
+                if (dagTitle) dagTitle.textContent = 'Lindas inleveranser';
+                if (subtitle) subtitle.textContent = 'Förväntade leveranser sorterade på datum';
+
+                const bestJobs = await loadOrders('best');
+                const active   = bestJobs.filter(j => !['levererad','avbruten'].includes(j.status));
+
+                const forsenade  = active.filter(j => j.levdatum && j.levdatum < today);
+                const idag       = active.filter(j => j.levdatum === today);
+                const imorgon    = active.filter(j => j.levdatum === tomorrow);
+                const dennaVecka = active.filter(j => j.levdatum > tomorrow && j.levdatum <= weekLater);
+                const kommande   = active.filter(j => !j.levdatum || j.levdatum > weekLater);
+
+                const btnS = 'border:none;border-radius:8px;padding:0.22rem 0.7rem;font-size:0.74rem;font-weight:600;cursor:pointer;';
+
+                function lindaCard(b) {
+                    const isOverdue  = b.levdatum && b.levdatum < today;
+                    const artikelStr = (b.artiklar || []).map(a => a.beskrivning || a.tyg || '').filter(Boolean).slice(0,2).join(', ');
+                    const receiveBtn = (b.status === 'skickad' || b.status === 'oppen')
+                        ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">
+                               <i class="bi bi-box-arrow-in-down"></i> Ta emot
+                           </button>
+                           <button style="${btnS}background:#7E57C2;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','dellevererad')">
+                               ~ Del.lev
+                           </button>`
+                        : b.status === 'dellevererad'
+                        ? `<button style="${btnS}background:#2E7D32;color:#fff" onclick="event.stopPropagation();quickReceiveBest('${b.id}','levererad')">
+                               <i class="bi bi-check2-all"></i> Fullt mottagen
+                           </button>`
+                        : '';
+                    return `<div onclick="switchTab('best');setTimeout(()=>showBestModal('${b.id}'),300)"
+                        class="dag-card" style="border-left:4px solid ${isOverdue ? '#c62828' : getPillColor(b.status)};flex-wrap:wrap;align-items:flex-start;">
+                        <div class="dag-card-left">
+                            <div class="dag-card-nr"><i class="bi bi-truck" style="font-size:0.8rem;opacity:0.7"></i> ${b.leverantor || '–'}</div>
+                            <div class="dag-card-info">${[b.ordernr, b.som_ordernr ? `↔ ${b.som_ordernr}` : '', artikelStr].filter(Boolean).join(' · ')}</div>
+                        </div>
+                        <div class="dag-card-right">
+                            <span class="dag-badge" style="background:${getPillColor(b.status)};color:#fff">${getStatusLabel(b.status)}</span>
+                            ${b.levdatum ? `<div style="font-size:0.75rem;color:${isOverdue?'#c62828':'#888'};margin-top:0.2rem;font-weight:${isOverdue?'700':'400'}">${b.levdatum}${isOverdue?' ⚠':''}</div>` : ''}
+                        </div>
+                        ${receiveBtn ? `<div style="margin-top:0.5rem;display:flex;gap:0.4rem;flex-wrap:wrap;width:100%;" onclick="event.stopPropagation()">${receiveBtn}</div>` : ''}
+                    </div>`;
+                }
+
+                function lindaSection(icon, label, color, items) {
+                    if (!items.length) return '';
+                    return `<div class="dag-section">
+                        <div class="dag-section-title" style="color:${color}">${icon} ${label}
+                            <span style="font-weight:400;font-size:0.82rem;color:#999">(${items.length})</span>
+                        </div>
+                        ${items.map(b => lindaCard(b)).join('')}
+                    </div>`;
+                }
+
+                container.innerHTML = [
+                    lindaSection('⚠️', 'Försenade', '#c62828', forsenade),
+                    lindaSection('📅', 'Idag', '#1565C0', idag),
+                    lindaSection('🌅', 'Imorgon', '#E65100', imorgon),
+                    lindaSection('📆', 'Denna vecka', '#4527A0', dennaVecka),
+                    lindaSection('📬', 'Kommande / Inget datum', '#555', kommande),
+                ].join('') || '<div style="padding:2rem;text-align:center;color:#999">Inga aktiva leveranser 🎉</div>';
+                return;   // linda's dagstavla klar
+            }
 
             const [allArJobs, allSomJobs] = await Promise.all([loadOrders('ar'), loadOrders('som')]);
 
@@ -3308,6 +3594,268 @@
             doc.save(`bestellning_${ordernr}.pdf`);
             await saveBestOrder();
             showToast('PDF genererad — status satt till Skickad');
+        }
+
+        // ============================================================================
+        // AR PDF
+        // ============================================================================
+        async function generateArPdf(jobId) {
+            const jobs = await loadOrders('ar');
+            const job  = jobs.find(j => j.id === jobId);
+            if (!job) { showToast('Kunde inte hitta order'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const W = 210, mL = 14, mR = 196;
+
+            // Hjälpfunktioner
+            const fw = (t,x,y,sz=9) => { doc.setFont('helvetica','bold');   doc.setFontSize(sz); doc.text(String(t||''),x,y); doc.setFont('helvetica','normal'); };
+            const fn = (t,x,y,sz=9) => { doc.setFont('helvetica','normal'); doc.setFontSize(sz); doc.text(String(t||''),x,y); };
+            const fi = (t,x,y,sz=8) => { doc.setFont('helvetica','italic'); doc.setFontSize(sz); doc.text(String(t||''),x,y); doc.setFont('helvetica','normal'); };
+            const hr = (y,lw=0.3) => { doc.setLineWidth(lw); doc.line(mL,y,mR,y); };
+
+            // ── HEADER ──────────────────────────────────────────────────────
+            fw('Ribe Gardin AB', mL, 16, 18);
+            fn('Box 2027  ·  135 02 Tyresö', mL, 22, 9);
+            doc.setFont('helvetica','bold'); doc.setFontSize(20);
+            doc.text('Arbetsorder', mR, 16, { align:'right' });
+            doc.setFont('helvetica','normal');
+            hr(27, 0.5);
+
+            // ── ORDERNR / STATUS RUT ─────────────────────────────────────
+            doc.setLineWidth(0.3);
+            doc.rect(mL, 30, 88, 30);
+            doc.rect(109, 30, 87, 30);
+
+            const statusColors = { utkast:'#9E9E9E', ny:'#7B1FA2', preliminar:'#1E88E5', bokad:'#1565C0', 'atergång':'#E65100', klar:'#2E7D32' };
+            const statusLabels = { utkast:'Utkast', ny:'Ny', preliminar:'Preliminär', bokad:'Bokad', 'atergång':'Återgång', klar:'Klar' };
+
+            // Vänster ruta
+            const lRows = [
+                ['Ordernr',    job.ordernr || '–'],
+                ['Kund',       job.kund    || '–'],
+                ['Projekt',    job.projekt || '–'],
+                ['Säljare',    job.saljare || '–'],
+            ];
+            lRows.forEach(([label,val], i) => {
+                fw(label, mL+2, 37+i*5.5, 8);
+                fn(val,   mL+28, 37+i*5.5, 8);
+            });
+
+            // Höger ruta
+            const rRows = [
+                ['Startdatum',  (job.startdatum||'–') + (job.bokadtid ? '  kl '+job.bokadtid : '')],
+                ['Slutdatum',   job.slutdatum  || '–'],
+                ['Montör',      job.montor     || '–'],
+                ['Status',      statusLabels[job.status] || job.status || '–'],
+            ];
+            rRows.forEach(([label,val], i) => {
+                fw(label, 111, 37+i*5.5, 8);
+                fn(val,   133, 37+i*5.5, 8);
+            });
+
+            let y = 66;
+
+            // ── KONTAKT ────────────────────────────────────────────────────
+            if (job.kontakt_namn || job.kontakt_tel || job.kontakt_mail) {
+                hr(y); y += 6;
+                fw('Kontaktperson', mL, y, 9); y += 6;
+                const kRows = [
+                    ['Namn', job.kontakt_namn],
+                    ['Tel',  job.kontakt_tel],
+                    ['Mail', job.kontakt_mail],
+                ].filter(r => r[1]);
+                kRows.forEach(([label,val]) => {
+                    fn(`${label}: `, mL, y, 8);
+                    fn(val, mL+16, y, 8);
+                    y += 5;
+                });
+            }
+
+            // ── ANTECKNINGAR ───────────────────────────────────────────────
+            if (job.anteckningar) {
+                y += 2; hr(y); y += 7;
+                fw('Anteckningar', mL, y, 9); y += 6;
+                const lines = doc.splitTextToSize(job.anteckningar, mR-mL);
+                lines.forEach(l => { fn(l, mL, y, 9); y += 5; });
+            }
+
+            // ── AVVIKELSE ──────────────────────────────────────────────────
+            if (job.avvikelse) {
+                y += 2; hr(y); y += 7;
+                doc.setDrawColor(198,40,40); doc.setLineWidth(0.5); doc.line(mL, y-4, mR, y-4); doc.setDrawColor(0); doc.setLineWidth(0.3);
+                fw('⚠ Avvikelse', mL, y, 9); y += 6;
+                const lines = doc.splitTextToSize(job.avvikelse, mR-mL);
+                lines.forEach(l => { fi(l, mL, y, 9); y += 5; });
+            }
+
+            // ── BILAGOR ────────────────────────────────────────────────────
+            const bilagor = job.bilagor || [];
+            if (bilagor.length) {
+                y += 2; hr(y); y += 7;
+                fw('Bilagor', mL, y, 9); y += 6;
+                for (const f of bilagor) {
+                    if (y > 250) { doc.addPage(); y = 20; }
+                    if (f.data && f.data.startsWith('data:image')) {
+                        try {
+                            const fmt = f.data.includes('image/png') ? 'PNG' : 'JPEG';
+                            // Beräkna storlek (max bredd 80mm)
+                            const maxW = 80, maxH = 60;
+                            doc.addImage(f.data, fmt, mL, y, maxW, maxH, undefined, 'MEDIUM');
+                            y += maxH + 4;
+                            fi(f.name, mL, y, 7); y += 6;
+                        } catch(e) {
+                            fn(`[Bild] ${f.name}`, mL, y, 8); y += 5;
+                        }
+                    } else {
+                        fn(`📎 ${f.name}`, mL, y, 8); y += 5;
+                    }
+                    if (y > 270) { doc.addPage(); y = 20; }
+                }
+            }
+
+            // ── SIDFOT ─────────────────────────────────────────────────────
+            const pH = doc.internal.pageSize.height;
+            hr(pH-28, 0.3);
+            fn('Tel: 08-712 65 63', mL, pH-22, 7);
+            fn('info@ribegardin.se', mL, pH-17, 7);
+            fn('www.ribegardin.se', mL, pH-12, 7);
+            fn(`Utskriven: ${new Date().toLocaleDateString('sv-SE')}`, mR, pH-12, 7);
+
+            doc.save(`arbetsorder_${job.ordernr || job.id}.pdf`);
+            showToast('PDF skapad ✓');
+        }
+
+        // ============================================================================
+        // SOM PDF
+        // ============================================================================
+        async function generateSomPdf(jobId) {
+            const jobs = await loadOrders('som');
+            const job  = jobs.find(j => j.id === jobId);
+            if (!job) { showToast('Kunde inte hitta sömnadsorder'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const W = 210, mL = 14, mR = 196;
+
+            const fw = (t,x,y,sz=9) => { doc.setFont('helvetica','bold');   doc.setFontSize(sz); doc.text(String(t||''),x,y); doc.setFont('helvetica','normal'); };
+            const fn = (t,x,y,sz=9) => { doc.setFont('helvetica','normal'); doc.setFontSize(sz); doc.text(String(t||''),x,y); };
+            const fi = (t,x,y,sz=8) => { doc.setFont('helvetica','italic'); doc.setFontSize(sz); doc.text(String(t||''),x,y); doc.setFont('helvetica','normal'); };
+            const hr = (y,lw=0.3) => { doc.setLineWidth(lw); doc.line(mL,y,mR,y); };
+
+            // ── HEADER ──────────────────────────────────────────────────────
+            fw('Ribe Gardin AB', mL, 16, 18);
+            fn('Box 2027  ·  135 02 Tyresö', mL, 22, 9);
+            doc.setFont('helvetica','bold'); doc.setFontSize(20);
+            doc.text('Sömnadsorder', mR, 16, { align:'right' });
+            doc.setFont('helvetica','normal');
+            hr(27, 0.5);
+
+            // ── INFO RUTOR ──────────────────────────────────────────────────
+            doc.setLineWidth(0.3);
+            doc.rect(mL, 30, 88, 30);
+            doc.rect(109, 30, 87, 30);
+
+            const somStatusLabels = { utkast:'Utkast', ny:'Ny', sy:'Syr', klar:'Klar' };
+
+            const lRows = [
+                ['Ordernr',     job.ordernr    || '–'],
+                ['Kund',        job.kund       || '–'],
+                ['Projekt',     job.projekt    || '–'],
+                ['Säljare',     job.saljare    || '–'],
+            ];
+            lRows.forEach(([label,val], i) => {
+                fw(label, mL+2, 37+i*5.5, 8);
+                fn(val,   mL+28, 37+i*5.5, 8);
+            });
+
+            const rRows = [
+                ['Leveransdatum', (job.leveransdatum||'–') + (job.leveranstid ? '  kl '+job.leveranstid : '')],
+                ['Kopplad AR',    job.ar_ordernr || '–'],
+                ['Status',        somStatusLabels[job.status] || job.status || '–'],
+            ];
+            rRows.forEach(([label,val], i) => {
+                fw(label, 111, 37+i*5.5, 8);
+                fn(val,   140, 37+i*5.5, 8);
+            });
+
+            let y = 66;
+
+            // ── MODULER / TYGLISTA ──────────────────────────────────────────
+            const moduler = job.moduler || [];
+            if (moduler.length) {
+                hr(y); y += 7;
+                fw('Tyglista / Moduler', mL, y, 10); y += 7;
+
+                // Tabellhuvud
+                doc.setFillColor(235,235,235);
+                doc.rect(mL, y-5, mR-mL, 7, 'F');
+                hr(y-5, 0.2); hr(y+2, 0.2);
+                fw('Rum / Beskrivning', mL+1, y, 8);
+                fw('Tyg',              76, y, 8);
+                fw('Leverantör',       116, y, 8);
+                fw('Meter',            168, y, 8);
+                y += 7;
+
+                moduler.forEach((m, mi) => {
+                    if (y > 255) { doc.addPage(); y = 20; }
+                    const desc = m.beskrivning || m.rum || `Modul ${mi+1}`;
+                    fn(doc.splitTextToSize(desc, 58)[0], mL+1, y, 8);
+                    fn((m.tyg || '').substring(0,35),    76, y, 8);
+                    fn((m.leverantor || '').substring(0,28), 116, y, 8);
+                    fn(m.antal_meter ? String(m.antal_meter)+' m' : '', 168, y, 8);
+                    y += 5;
+
+                    // Klippmått per rad
+                    if (m.rader && m.rader.length) {
+                        const kmStr = m.rader.map(r => [r.fb, r.fh].filter(Boolean).join('×')).filter(Boolean).join(', ');
+                        if (kmStr) { fi('Klippmått: '+kmStr, mL+4, y, 7); y += 4; }
+                    }
+                    doc.setLineWidth(0.1); doc.line(mL, y, mR, y); y += 1;
+                });
+                y += 4;
+            }
+
+            // ── ANTECKNINGAR ────────────────────────────────────────────────
+            if (job.anteckningar) {
+                hr(y); y += 7;
+                fw('Anteckningar', mL, y, 9); y += 6;
+                const lines = doc.splitTextToSize(job.anteckningar, mR-mL);
+                lines.forEach(l => { fn(l, mL, y, 9); y += 5; });
+            }
+
+            // ── BILAGOR ────────────────────────────────────────────────────
+            const bilagor = job.bilagor || [];
+            if (bilagor.length) {
+                y += 2; hr(y); y += 7;
+                fw('Bilagor', mL, y, 9); y += 6;
+                for (const f of bilagor) {
+                    if (y > 250) { doc.addPage(); y = 20; }
+                    if (f.data && f.data.startsWith('data:image')) {
+                        try {
+                            const fmt = f.data.includes('image/png') ? 'PNG' : 'JPEG';
+                            doc.addImage(f.data, fmt, mL, y, 80, 60, undefined, 'MEDIUM');
+                            y += 64;
+                            fi(f.name, mL, y, 7); y += 6;
+                        } catch(e) {
+                            fn(`[Bild] ${f.name}`, mL, y, 8); y += 5;
+                        }
+                    } else {
+                        fn(`📎 ${f.name}`, mL, y, 8); y += 5;
+                    }
+                }
+            }
+
+            // ── SIDFOT ─────────────────────────────────────────────────────
+            const pH = doc.internal.pageSize.height;
+            hr(pH-28, 0.3);
+            fn('Tel: 08-712 65 63', mL, pH-22, 7);
+            fn('info@ribegardin.se', mL, pH-17, 7);
+            fn('www.ribegardin.se', mL, pH-12, 7);
+            fn(`Utskriven: ${new Date().toLocaleDateString('sv-SE')}`, mR, pH-12, 7);
+
+            doc.save(`somanadsorder_${job.ordernr || job.id}.pdf`);
+            showToast('PDF skapad ✓');
         }
 
         async function deleteBestOrder() {
