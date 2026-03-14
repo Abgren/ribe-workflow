@@ -51,9 +51,13 @@
             --status-preliminar:#64B5F6;
             --status-bokad:     #5B9BD5;
             --status-atergång:  #FFB74D;
-            --status-klar:      #66BB6A;
-            --status-ny-som:    #8FB265;
-            --status-sy:        #B0C882;
+            --status-klar:      #4CAF50;
+            /* SOM-statusfärger — tydliga på storskärm */
+            --status-ny-som:    #1565C0;   /* blå — inväntar tyg */
+            --status-tyg-anlänt:#E65100;   /* djup orange — tyg framme, redo att börja */
+            --status-syr:       #6A1B9A;   /* lila — aktivt syende */
+            --status-klar-som:  #2E7D32;   /* mörkgrön — klar */
+            --status-sy:        #6A1B9A;   /* bakåtkompatibilitet */
 
             /* Kept for login gradient */
             --color-ar-primary: #D4A96A;
@@ -129,6 +133,35 @@
             color: #7A7A7A;
             margin-bottom: 2rem;
             font-size: 1rem;
+        }
+        #pinSection {
+            display: none;
+            margin-bottom: 1rem;
+        }
+        #pinSection label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.4rem;
+            text-align: left;
+        }
+        #pinInput {
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 0.5rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        #pinInput:focus { border-color: var(--color-ar-primary); outline: none; }
+        #pinInput.pin-error { border-color: #d32f2f; animation: shake 0.3s; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
         
         .login-btn {
@@ -281,7 +314,8 @@
         .tab-panel-best.active,
         .tab-panel-dag.active,
         .tab-panel-mont.active,
-        .tab-panel-fakt.active {
+        .tab-panel-fakt.active,
+        .tab-panel-atelje.active {
             flex-direction: column;
             padding: 0;
             gap: 0;
@@ -331,6 +365,95 @@
             transition: opacity 0.15s;
         }
         .mont-btn:active { opacity: 0.75; }
+
+        /* ── ATELJE-VY — storskärm ─────────────────────────────────────── */
+        .atelje-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.2rem;
+            align-items: start;
+        }
+        .atelje-col-header {
+            border-radius: 14px 14px 0 0;
+            padding: 0.9rem 1.2rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0;
+        }
+        .atelje-col-body {
+            border-radius: 0 0 14px 14px;
+            background: #f5f5f5;
+            padding: 0.8rem;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+        }
+        .atelje-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            border-left: 6px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .atelje-card:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,0.16); }
+        .atelje-card:active { transform: scale(0.98); }
+        .atelje-card-nr {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #1A3C5E;
+            line-height: 1.1;
+            margin-bottom: 0.2rem;
+        }
+        .atelje-card-kund {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .atelje-card-info {
+            font-size: 0.88rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+        .atelje-card-deadline {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .atelje-card-actions {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .atelje-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.15s;
+            flex: 1;
+            min-width: 80px;
+        }
+        .atelje-btn:active { opacity: 0.75; }
+        @media (max-width: 768px) {
+            .atelje-columns { grid-template-columns: 1fr; }
+            .atelje-card-nr { font-size: 1.15rem; }
+        }
+
         .mont-info-row {
             display: flex;
             gap: 0.4rem;
@@ -526,7 +649,13 @@
         .status-pill.ny-som {
             background-color: var(--status-ny-som);
         }
-        
+        .status-pill.tyg-anlänt {
+            background-color: var(--status-tyg-anlänt);
+        }
+        .status-pill.syr {
+            background-color: var(--status-syr);
+        }
+
         .status-pill.preliminar {
             background-color: var(--status-preliminar);
             color: #3D3D3D;
@@ -974,7 +1103,7 @@
         <div class="login-card">
             <h1>Ribe Workflow</h1>
             <p>Välj ditt namn för att fortsätta</p>
-            <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;">
+            <select class="form-select mb-3" id="nameSelect" style="font-size:1.1rem;padding:0.6rem;" onchange="onNameSelected()">
                 <option value="">-- Välj namn --</option>
                 <optgroup label="Säljare">
                     <option>Anders</option>
@@ -992,7 +1121,14 @@
                     <option>Mukta</option>
                     <option>David</option>
                 </optgroup>
+                <optgroup label="Syatelje">
+                    <option>Syatelje</option>
+                </optgroup>
             </select>
+            <div id="pinSection">
+                <label for="pinInput"><i class="bi bi-shield-lock"></i> PIN-kod (4 siffror)</label>
+                <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleLogin()">
+            </div>
             <button class="login-btn" id="loginBtnMsal">
                 <i class="bi bi-box-arrow-in-right"></i> Logga in
             </button>
@@ -1043,6 +1179,9 @@
             <button class="nav-link" id="tab-fakt" role="tab" data-tab="fakt">
                 <i class="bi bi-receipt"></i> Klar för fakturering
                 <span id="faktBadge" style="display:none;background:#c62828;color:#fff;border-radius:10px;font-size:0.7rem;font-weight:700;padding:0.1rem 0.45rem;margin-left:0.3rem;"></span>
+            </button>
+            <button class="nav-link" id="tab-atelje" role="tab" data-tab="atelje" style="display:none;">
+                <i class="bi bi-scissors"></i> Atelje
             </button>
             <!-- Min vy-fliken borttagen — säljares utkast visas nu direkt i respektive sidebar -->
         </div>
@@ -1105,8 +1244,9 @@
                             <option value="all">— Standard —</option>
                             <option value="utkast">Utkast</option>
                             <option value="ny">NY</option>
-                            <option value="sy">Sy</option>
-                            <option value="klar">Klar</option>
+                            <option value="tyg anlänt">🧵 Tyg Anlänt</option>
+                            <option value="syr">✂️ Syr</option>
+                            <option value="klar">✅ Klar</option>
                             <option value="makulerad">⛔ Makulerade</option>
                         </select>
 
@@ -1207,6 +1347,27 @@
                 <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="faktContainer"></div>
             </div>
 
+            <!-- ATELJE-VY — storskärm för syatelién -->
+            <div class="tab-panel tab-panel-atelje" id="ateljePanel">
+                <div id="ateljeHeader" style="padding:0.75rem 1.5rem;background:#1A3C5E;color:white;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.3rem;font-weight:700;letter-spacing:0.03em;">✂️ Syatelje — Live</span>
+                        <span id="ateljeLastUpdate" style="font-size:0.78rem;opacity:0.7;"></span>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button onclick="renderAteljeVy()" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:0.35rem 0.8rem;font-size:0.85rem;cursor:pointer;">
+                            <i class="bi bi-arrow-clockwise"></i> Uppdatera
+                        </button>
+                        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;">
+                            <input type="checkbox" id="ateljeVisaKlara" onchange="renderAteljeVy()" style="accent-color:#4CAF50;">
+                            Visa klara
+                        </label>
+                    </div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:1.2rem;" id="ateljeContainer">
+                    <div style="color:#999;padding:2rem;text-align:center">Laddar...</div>
+                </div>
+            </div>
             <!-- MIN VY TAB (borttagen — säljares utkast visas i AR/SOM sidebar) -->
 
         </div>
@@ -1496,9 +1657,10 @@
             'Lilly':   '',
             'Ali':     '',
             // Montörer har inget säljarnamn
-            'Hampus':  '',
-            'Mukta':   '',
-            'David':   '',
+            'Hampus':   '',
+            'Mukta':    '',
+            'David':    '',
+            'Syatelje': '',  // storskärmsvy — ingen säljare
         };
 
         function getSaljareForUser(loginName) {
@@ -1534,14 +1696,46 @@
             }, 3000);
         }
 
+        // ── PIN-KODER — ändra dessa innan driftsättning ────────────────────────
+        const USER_PINS = {
+            'Anders':  '2001',
+            'Tina':    '2002',
+            'Daniel':  '2003',
+            'Tess':    '2004',
+            'Linda':   '2005',
+            'Lilly':   '2006',
+            'Ali':     '2007',
+            'Hampus':  '2008',
+            'Mukta':   '2009',
+            'David':   '2010',
+            'Syatelje':'0000',  // storskärm — kan ändras
+        };
+
+        function onNameSelected() {
+            const name = document.getElementById('nameSelect').value;
+            const pinSection = document.getElementById('pinSection');
+            const pinInput   = document.getElementById('pinInput');
+            if (name) {
+                pinSection.style.display = 'block';
+                pinInput.value = '';
+                pinInput.classList.remove('pin-error');
+                setTimeout(() => pinInput.focus(), 50);
+            } else {
+                pinSection.style.display = 'none';
+            }
+            document.getElementById('loginError').style.display = 'none';
+        }
+
         function requestNotifPermission() {
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
         }
 
-        function sendNotif(title, body, icon = '🔔') {
-            if (currentUser?.name !== 'Lilly') return;
+        // targetUsers: lista med namn som ska få notisen
+        function sendNotif(title, body, targetUsers = ['Lilly']) {
+            const name = currentUser?.name;
+            if (!targetUsers.includes(name)) return;
             if (!('Notification' in window) || Notification.permission !== 'granted') return;
             new Notification(title, { body, icon: '/favicon.ico', badge: '/favicon.ico' });
         }
@@ -1562,11 +1756,15 @@
         async function generateBestOrdernr() {
             const orders = await loadOrders('best');
             if (!orders || orders.length === 0) return '6000';
+            const existing = new Set(orders.map(b => b.ordernr));
             const maxNr = orders.reduce((max, b) => {
                 const n = parseInt(b.ordernr);
                 return (!isNaN(n) && n > max) ? n : max;
             }, 5999);
-            return String(maxNr + 1);
+            // Säkerhetsnät mot race-condition: leta uppåt tills vi hittar ett ledigt nummer
+            let candidate = maxNr + 1;
+            while (existing.has(String(candidate))) candidate++;
+            return String(candidate);
         }
         
         // ============================================================================
@@ -1620,25 +1818,29 @@
                     const modalOpen = document.querySelector('.modal.show') || document.getElementById('mainDrawer')?.classList.contains('open');
                     if (modalOpen) return;
 
-                    // Notifications for Lilly
+                    // Notiser — riktade till rätt användare
                     if (t === 'ar' && payload.eventType === 'INSERT') {
-                        sendNotif('Ny arbetsorder', payload.new?.data?.ordernr + ' · ' + (payload.new?.data?.kund || ''));
+                        // Ny AR → Lilly (koordinera) + Ali (fördela jobb)
+                        sendNotif('🆕 Ny arbetsorder', payload.new?.data?.ordernr + ' · ' + (payload.new?.data?.kund || ''), ['Lilly', 'Ali']);
                     } else if (t === 'ar' && payload.eventType === 'UPDATE') {
-                        // Check if ready for delivery
                         const newData = payload.new?.data;
                         if (newData?.ordernr) {
-                            // Load current SOM status to check if all are ready
                             loadOrders('som').then(soms => {
                                 const arStatus = getArSomStatus({ ordernr: newData.ordernr }, soms);
                                 if (arStatus?.allKlar && newData.status !== 'klar') {
-                                    sendNotif('✅ Redo för leverans', newData.ordernr + ' · ' + (newData.kund || '') + ' är redo att levereras!');
+                                    sendNotif('✅ Redo för leverans', newData.ordernr + ' · ' + (newData.kund || '') + ' är redo att levereras!', ['Lilly']);
                                 }
                             });
                         }
+                        // Status → bokad notis till montör (om appen är öppen i deras webbläsare)
+                        if (payload.new?.data?.status === 'bokad' && payload.new?.data?.montor) {
+                            sendNotif('📋 Nytt jobb tilldelat', payload.new?.data?.ordernr + ' · ' + (payload.new?.data?.projekt || payload.new?.data?.kund || ''), [payload.new.data.montor]);
+                        }
                     } else if (t === 'som' && payload.eventType === 'UPDATE' && payload.new?.data?.status === 'klar') {
-                        sendNotif('✂️ Sömnadsorder klar', payload.new?.data?.ordernr + ' är färdigsydd');
+                        sendNotif('✂️ Sömnadsorder klar', payload.new?.data?.ordernr + ' är färdigsydd', ['Lilly']);
                     } else if (t === 'best' && payload.eventType === 'UPDATE' && payload.new?.data?.status === 'levererad') {
-                        sendNotif('📦 Tyg har anlänt', 'Beställning ' + (payload.new?.data?.ordernr || '') + ' levererad');
+                        // Tyg anlänt → Linda (godsmottagning)
+                        sendNotif('📦 Tyg har anlänt', 'Beställning ' + (payload.new?.data?.ordernr || '') + ' levererad', ['Linda']);
                     }
 
                     if (t === 'ar') {
@@ -1649,6 +1851,8 @@
                     } else if (t === 'som') {
                         window._cachedSoms = null; // invalidera cache
                         loadAndRenderSomJobs();
+                        // Uppdatera atelje-vyn om den är aktiv
+                        if (currentTab === 'atelje') renderAteljeVy();
                         // Uppdatera också AR-vyn (SOM-status kan påverka AR-indikatorer)
                         loadAndRenderArJobs();
                     } else if (t === 'best') renderBestTable();
@@ -1693,13 +1897,28 @@
 
         async function handleLogin() {
             const name = document.getElementById('nameSelect').value;
+            const errEl = document.getElementById('loginError');
             if (!name) {
-                document.getElementById('loginError').style.display = 'block';
+                errEl.textContent = 'Välj ditt namn först.';
+                errEl.style.display = 'block';
                 return;
             }
+            // PIN-kontroll
+            const enteredPin = document.getElementById('pinInput').value;
+            const correctPin = USER_PINS[name];
+            if (!enteredPin || enteredPin !== correctPin) {
+                const pinInput = document.getElementById('pinInput');
+                pinInput.classList.add('pin-error');
+                errEl.textContent = 'Fel PIN-kod. Försök igen.';
+                errEl.style.display = 'block';
+                setTimeout(() => { pinInput.classList.remove('pin-error'); pinInput.value = ''; pinInput.focus(); }, 600);
+                return;
+            }
+            errEl.style.display = 'none';
             sessionStorage.setItem('ribeUser', name);
             currentUser = { name: name };
-            if (name === 'Lilly') {
+            // Begär notisbehörighet för relevanta användare
+            if (['Lilly', 'Linda', 'Ali'].includes(name)) {
                 requestNotifPermission();
             }
             showMainApp();
@@ -1734,21 +1953,43 @@
         // ============================================================================
 
         async function initializeApp() {
+            const name = currentUser?.name || '';
             // Starta real-time synk mot Supabase
             setupRealtimeSync();
+
+            // Dölj/visa rätt flikar beroende på roll
+            applyTabVisibility(name);
 
             // Setup event listeners
             setupEventListeners();
 
-            // Montörer börjar på "Mina jobb"-fliken, alla andra på AR
-            if (isMontor(currentUser?.name || '') && currentUser?.name !== 'Ali') {
-                // Ali är koordinator med dubbel roll — börjar på AR
+            if (name === 'Syatelje') {
+                // Syatelje → storskärmsvy för atelijen
+                await switchTab('atelje');
+            } else if (isMontor(name) && name !== 'Ali') {
+                // Montörer börjar på "Mina jobb"-fliken
                 await switchTab('mont');
             } else {
-                // Initiera kalender och ladda AR
+                // Alla andra börjar på AR
                 if (!arCalendar) initArCalendar();
                 await loadAndRenderArJobs();
             }
+        }
+
+        function applyTabVisibility(name) {
+            const isSyatelje = name === 'Syatelje';
+            const isMont     = isMontor(name) && name !== 'Ali';
+            // Atelje-fliken visas bara för Syatelje
+            const tabAtelje = document.getElementById('tab-atelje');
+            if (tabAtelje) tabAtelje.style.display = isSyatelje ? '' : 'none';
+            // Syatelje ser bara atelje-fliken — dölj övriga
+            ['tab-ar','tab-som','tab-best','tab-fakt','tab-dag','tab-mont'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (isSyatelje) { el.style.display = 'none'; return; }
+                if (id === 'tab-mont' && !isMont) { el.style.display = 'none'; return; }
+                el.style.display = '';
+            });
         }
         
         // ============================================================================
@@ -1789,6 +2030,8 @@
                 await renderMontorVy();
             } else if (tab === 'fakt') {
                 await renderFaktList();
+            } else if (tab === 'atelje') {
+                await renderAteljeVy();
             }
         }
         
@@ -1853,7 +2096,7 @@
                 const deliveryTomorrow = jobs.filter(j => j.startdatum === tomorrow && j.status === 'bokad');
                 if (deliveryTomorrow.length > 0) {
                     const ordernrs = deliveryTomorrow.map(j => j.ordernr).join(', ');
-                    sendNotif('📅 Leverans imorgon', ordernrs);
+                    sendNotif('📅 Leverans imorgon', ordernrs, ['Lilly']);
                     window._deliveryReminderSent = true;
                 }
             }
@@ -1977,10 +2220,13 @@
                     'klar': '#2E7D32'
                 },
                 som: {
-                    'utkast': '#9E9E9E',
-                    'ny': '#00695C',
-                    'sy': '#00897B',
-                    'klar': '#2E7D32'
+                    'utkast':      '#9E9E9E',
+                    'ny':          '#1565C0',
+                    'tyg anlänt':  '#E65100',
+                    'sy':          '#6A1B9A',   // bakåtkompatibilitet
+                    'syr':         '#6A1B9A',
+                    'klar':        '#2E7D32',
+                    'makulerad':   '#c62828'
                 }
             };
             return colors[type]?.[status] || '#999';
@@ -2032,7 +2278,7 @@
             const existingFiles = (jobData.bilagor || []).map((f,i) =>
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                     <i class="bi bi-paperclip" style="color:#666;"></i>
-                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                    <a href="${f.data}" target="_blank" download="${f.name}" style="flex:1;font-size:0.9rem;color:#1A3C5E;text-decoration:none;" onclick="event.stopPropagation()">${f.name}</a>
                     <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
                 </div>`).join('');
 
@@ -2250,7 +2496,14 @@
         }
 
         function handleArFileSelect(input) {
-            const files = Array.from(input.files);
+            const MAX_FILE_MB = 5;
+            const files = Array.from(input.files).filter(f => {
+                if (f.size > MAX_FILE_MB * 1024 * 1024) {
+                    showToast(`⚠️ ${f.name} är för stor (max ${MAX_FILE_MB} MB)`, 4000);
+                    return false;
+                }
+                return true;
+            });
             const promises = files.map(f => new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = e => resolve({ name: f.name, size: f.size, data: e.target.result });
@@ -2258,37 +2511,30 @@
             }));
             Promise.all(promises).then(results => {
                 window._arPendingFiles = (window._arPendingFiles || []).concat(results);
-                const list = document.getElementById('ar_filelist');
-                list.innerHTML = window._arPendingFiles.map((f,i) =>
-                    `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
-                        <i class="bi bi-paperclip" style="color:#666;"></i>
-                        <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                        <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
-                    </div>`).join('');
+                renderFilelist(window._arPendingFiles, 'ar_filelist', 'removeArFile', '#1A3C5E');
                 input.value = '';
             });
         }
 
-        function removeArFile(idx) {
-            window._arPendingFiles.splice(idx, 1);
-            const list = document.getElementById('ar_filelist');
-            list.innerHTML = window._arPendingFiles.map((f,i) =>
+        function renderFilelist(files, containerId, removeFn, linkColor) {
+            const list = document.getElementById(containerId);
+            if (!list) return;
+            list.innerHTML = files.map((f,i) =>
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                     <i class="bi bi-paperclip" style="color:#666;"></i>
-                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                    <button type="button" onclick="removeArFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
+                    <a href="${f.data}" target="_blank" download="${f.name}" style="flex:1;font-size:0.9rem;color:${linkColor};text-decoration:none;" onclick="event.stopPropagation()">${f.name}</a>
+                    <button type="button" onclick="${removeFn}(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
                 </div>`).join('');
+        }
+
+        function removeArFile(idx) {
+            window._arPendingFiles.splice(idx, 1);
+            renderFilelist(window._arPendingFiles, 'ar_filelist', 'removeArFile', '#1A3C5E');
         }
 
         function removeSomFile(idx) {
             window._somPendingFiles.splice(idx, 1);
-            const list = document.getElementById('som_filelist');
-            list.innerHTML = window._somPendingFiles.map((f,i) =>
-                `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
-                    <i class="bi bi-paperclip" style="color:#666;"></i>
-                    <span style="flex:1;font-size:0.9rem;">${f.name}</span>
-                    <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
-                </div>`).join('');
+            renderFilelist(window._somPendingFiles, 'som_filelist', 'removeSomFile', '#5e35b1');
         }
 
         async function deleteArJobFromDrawer(id) {
@@ -2500,8 +2746,8 @@
             let filtered;
             if (somStatusFilter === 'all') {
                 if (isCoordinator) {
-                    // Lilly/Ali: visa Ny (alla säljare)
-                    filtered = jobs.filter(j => j.status === 'ny');
+                    // Lilly/Ali: visa aktiva ordrar (ny + tyg anlänt + syr)
+                    filtered = jobs.filter(j => ['ny','tyg anlänt','syr','sy'].includes(j.status));
                 } else {
                     // Säljare: visa SINA egna SOM-utkast
                     filtered = jobs.filter(j =>
@@ -2510,7 +2756,12 @@
                     );
                 }
             } else {
-                filtered = jobs.filter(j => j.status === somStatusFilter);
+                // 'syr'-filtret fångar även gamla 'sy'-ordrar för bakåtkompatibilitet
+                if (somStatusFilter === 'syr') {
+                    filtered = jobs.filter(j => j.status === 'syr' || j.status === 'sy');
+                } else {
+                    filtered = jobs.filter(j => j.status === somStatusFilter);
+                }
             }
 
             if (searchText) {
@@ -2525,8 +2776,8 @@
                 return;
             }
 
-            const SOM_NEXT = { utkast:'ny', ny:'sy', sy:'klar' };
-            const SOM_PREV = { ny:'utkast', sy:'ny', klar:'sy' };
+            const SOM_NEXT = { utkast:'ny', ny:'tyg anlänt', 'tyg anlänt':'syr', syr:'klar', sy:'klar' };
+            const SOM_PREV = { ny:'utkast', 'tyg anlänt':'ny', syr:'tyg anlänt', sy:'tyg anlänt', klar:'syr' };
             const SOM_SC = { utkast:'#9E9E9E', ny:'#00695C', sy:'#00897B', klar:'#2E7D32' };
             const SOM_SL = { utkast:'Utkast', ny:'Ny', sy:'Syr', klar:'Klar' };
             const btnS = 'border:none;border-radius:8px;padding:0.2rem 0.6rem;font-size:0.72rem;font-weight:600;cursor:pointer;';
@@ -2655,8 +2906,9 @@
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button type="button" class="status-pill ${jobData.status === 'utkast' ? 'active' : ''}" data-som-status="utkast" style="background: ${jobData.status === 'utkast' ? 'var(--status-utkast)' : '#eee'}; color: ${jobData.status === 'utkast' ? 'white' : '#333'};">Utkast</button>
                         <button type="button" class="status-pill ${jobData.status === 'ny' ? 'active' : ''}" data-som-status="ny" style="background: ${jobData.status === 'ny' ? 'var(--status-ny-som)' : '#eee'}; color: white;">NY</button>
-                        <button type="button" class="status-pill ${jobData.status === 'sy' ? 'active' : ''}" data-som-status="sy" style="background: ${jobData.status === 'sy' ? 'var(--status-sy)' : '#eee'}; color: white;">Sy</button>
-                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-som-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar)' : '#eee'}; color: white;">Klar</button>
+                        <button type="button" class="status-pill ${jobData.status === 'tyg anlänt' ? 'active' : ''}" data-som-status="tyg anlänt" style="background: ${jobData.status === 'tyg anlänt' ? 'var(--status-tyg-anlänt)' : '#eee'}; color: white;">🧵 Tyg Anlänt</button>
+                        <button type="button" class="status-pill ${['sy','syr'].includes(jobData.status) ? 'active' : ''}" data-som-status="syr" style="background: ${['sy','syr'].includes(jobData.status) ? 'var(--status-syr)' : '#eee'}; color: white;">✂️ Syr</button>
+                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-som-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar-som)' : '#eee'}; color: white;">✅ Klar</button>
                     </div>
                 </div>
                 
@@ -2671,7 +2923,7 @@
                         ${(jobData.bilagor || []).map((f,i) => `
                         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                             <i class="bi bi-paperclip" style="color:#666;"></i>
-                            <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                            <a href="${f.data}" target="_blank" download="${f.name}" style="flex:1;font-size:0.9rem;color:#5e35b1;text-decoration:none;" onclick="event.stopPropagation()">${f.name}</a>
                             <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
                         </div>`).join('')}
                     </div>
@@ -2708,7 +2960,14 @@
             const somFileInput = document.getElementById('som_fileInput');
             if (somFileInput) {
                 somFileInput.addEventListener('change', e => {
-                    const files = Array.from(e.target.files);
+                    const MAX_FILE_MB = 5;
+                    const files = Array.from(e.target.files).filter(f => {
+                        if (f.size > MAX_FILE_MB * 1024 * 1024) {
+                            showToast(`⚠️ ${f.name} är för stor (max ${MAX_FILE_MB} MB)`, 4000);
+                            return false;
+                        }
+                        return true;
+                    });
                     const promises = files.map(f => new Promise(resolve => {
                         const reader = new FileReader();
                         reader.onload = ev => resolve({ name: f.name, size: f.size, data: ev.target.result });
@@ -2720,7 +2979,7 @@
                         list.innerHTML = window._somPendingFiles.map((f,i) =>
                             `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid #f0f0f0;">
                                 <i class="bi bi-paperclip" style="color:#666;"></i>
-                                <span style="flex:1;font-size:0.9rem;">${f.name}</span>
+                                <a href="${f.data}" target="_blank" download="${f.name}" style="flex:1;font-size:0.9rem;color:#5e35b1;text-decoration:none;" onclick="event.stopPropagation()">${f.name}</a>
                                 <button type="button" onclick="removeSomFile(${i})" style="background:none;border:none;color:#cc0000;cursor:pointer;padding:0;font-size:1.1rem;">×</button>
                             </div>`
                         ).join('');
@@ -3057,15 +3316,23 @@
             if (newStatus === 'levererad' || newStatus === 'dellevererad') job.mottagen = today;
             await saveOrder('best', job);
 
-            // Om fullt levererad — uppdatera länkad SOM-order automatiskt
+            // Om fullt levererad — kontrollera om ALLA tyger till länkad SOM nu är levererade
             if (newStatus === 'levererad' && job.som_ordernr) {
-                const somJobs = await loadOrders('som');
+                const [somJobs, allBestJobs] = await Promise.all([loadOrders('som'), loadOrders('best')]);
                 const linked  = somJobs.find(s => s.ordernr === job.som_ordernr);
-                if (linked && linked.status === 'ny') {
-                    linked.status = 'sy';
-                    await saveOrder('som', linked);
-                    sendNotif('📦 Tyg mottaget', `${job.leverantor} → ${job.som_ordernr} — redo att sys`);
-                    showToast(`Tyg mottaget! ${job.som_ordernr} är nu "Syr" 🧵`);
+                if (linked && ['ny','utkast'].includes(linked.status)) {
+                    // Kolla om det finns kvarvarande olevererade BEST-ordrar för detta SOM
+                    const allBestForSom = allBestJobs.filter(b => b.som_ordernr === job.som_ordernr);
+                    const allDelivered  = allBestForSom.every(b => b.status === 'levererad' || b.id === job.id);
+                    if (allDelivered) {
+                        // Alla tyger framme → "Tyg Anlänt"
+                        linked.status = 'tyg anlänt';
+                        await saveOrder('som', linked);
+                        sendNotif('🧵 Alla tyger framme!', `${job.som_ordernr} — redo att börja sy`, ['Lilly', 'Linda', 'Syatelje']);
+                        showToast(`Alla tyger framme! ${job.som_ordernr} → Tyg Anlänt 🧵`);
+                    } else {
+                        showToast(`Tyg mottaget. Väntar på resterande leveranser för ${job.som_ordernr}`);
+                    }
                 } else {
                     showToast(`Beställning levererad ✓`);
                 }
@@ -3264,9 +3531,10 @@
             if (!container) return;
             container.innerHTML = '<div style="color:#999;padding:1rem">Laddar...</div>';
 
-            const today     = new Date().toISOString().split('T')[0];
-            const tomorrow  = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-            const weekLater = new Date(Date.now() + 7*86400000).toISOString().split('T')[0];
+            const today        = new Date().toISOString().split('T')[0];
+            const tomorrow     = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+            const weekLater    = new Date(Date.now() + 7*86400000).toISOString().split('T')[0];
+            const twoWeeksLater = new Date(Date.now() + 14*86400000).toISOString().split('T')[0];
 
             // ── LINDAS INLEVERANS-DAGSTAVLA ───────────────────────────────
             if (currentUser?.name === 'Linda') {
@@ -3380,6 +3648,11 @@
                 ...arJobs.filter(j => j.startdatum > tomorrow && j.startdatum <= weekLater && j.status !== 'klar'),
                 ...somJobs.filter(j => j.leveransdatum > tomorrow && j.leveransdatum <= weekLater && j.status !== 'klar')
             ];
+            // Nästa vecka — bara koordinatorer ser detta (för planering)
+            const nastaVecka = isCoordinator ? [
+                ...arJobs.filter(j => j.startdatum > weekLater && j.startdatum <= twoWeeksLater && j.status !== 'klar'),
+                ...somJobs.filter(j => j.leveransdatum > weekLater && j.leveransdatum <= twoWeeksLater && j.status !== 'klar')
+            ] : [];
             // Behöver åtgärd: säljare ser egna utkast, Lilly ser alla ny-ordrar
             const behoverAtgard = isCoordinator
                 ? arJobs.filter(j => j.status === 'ny')
@@ -3434,6 +3707,7 @@
                 section('Idag', '📅', '#1565C0', idag, autoCard),
                 section('Imorgon', '🌅', '#E65100', imorgon, autoCard),
                 section('Denna vecka', '📆', '#4527A0', dennaVecka, autoCard),
+                section('Nästa vecka', '🗓️', '#00695C', nastaVecka, autoCard),
                 section('Behöver åtgärd (nya/utkast)', '🔔', '#F57C00', behoverAtgard, arCard),
             ].join('') || '<div style="padding:2rem;text-align:center;color:#999">Inget att visa just nu 🎉</div>';
         }
@@ -3617,6 +3891,102 @@
         // ============================================================================
         // KLAR FÖR FAKTURERING
         // ============================================================================
+
+        // ============================================================================
+        // ATELJE-VY — Storskärm för syatelién
+        // ============================================================================
+        let _ateljeRefreshTimer = null;
+
+        async function renderAteljeVy() {
+            const container = document.getElementById('ateljeContainer');
+            if (!container) return;
+
+            const jobs = await loadOrders('som');
+            const visaKlara = document.getElementById('ateljeVisaKlara')?.checked;
+            const today = new Date().toISOString().split('T')[0];
+
+            // Uppdatera "senast uppdaterad"-stämpel
+            const upd = document.getElementById('ateljeLastUpdate');
+            if (upd) upd.textContent = 'Uppdaterad: ' + new Date().toLocaleTimeString('sv-SE', { hour:'2-digit', minute:'2-digit' });
+
+            // Status-config — storskärm
+            const SOM_COLS = [
+                { statuses: ['ny'],          label: 'Inväntar tyg',  icon: '📦', color: '#1565C0' },
+                { statuses: ['tyg anlänt'],  label: 'Tyg Anlänt',   icon: '🧵', color: '#E65100' },
+                { statuses: ['syr','sy'],    label: 'Syr nu',        icon: '✂️', color: '#6A1B9A' },
+            ];
+            if (visaKlara) SOM_COLS.push({ statuses: ['klar'], label: 'Klar', icon: '✅', color: '#2E7D32' });
+
+            const active = jobs.filter(j => !['utkast','makulerad'].includes(j.status));
+            const SC_MAP = { ny:'#1565C0', 'tyg anlänt':'#E65100', syr:'#6A1B9A', sy:'#6A1B9A', klar:'#2E7D32' };
+
+            function ateljeCard(job) {
+                const color  = SC_MAP[job.status] || '#999';
+                const today  = new Date().toISOString().split('T')[0];
+                const overdue = job.leveransdatum && job.leveransdatum < today;
+                const deadlineColor = overdue ? '#c62828' : (job.leveransdatum === new Date(Date.now()+86400000).toISOString().split('T')[0] ? '#E65100' : '#555');
+
+                // Knappar för statusbyte
+                const NEXT = { ny:'tyg anlänt', 'tyg anlänt':'syr', syr:'klar', sy:'klar' };
+                const PREV = { 'tyg anlänt':'ny', syr:'tyg anlänt', sy:'tyg anlänt', klar:'syr' };
+                const nextS = NEXT[job.status];
+                const prevS = PREV[job.status];
+                const LABELS = { ny:'NY', 'tyg anlänt':'Tyg Anlänt', syr:'Syr', sy:'Syr', klar:'Klar' };
+
+                const nextBtn = nextS ? `<button class="atelje-btn" style="background:${SC_MAP[nextS]}"
+                    onclick="event.stopPropagation();ateljeSetStatus('${job.id}','${nextS}')">
+                    → ${LABELS[nextS]}</button>` : '';
+                const prevBtn = prevS ? `<button class="atelje-btn" style="background:#888"
+                    onclick="event.stopPropagation();ateljeSetStatus('${job.id}','${prevS}')">
+                    ← ${LABELS[prevS]}</button>` : '';
+
+                return `<div class="atelje-card" style="border-left-color:${color}" onclick="switchTab('som');setTimeout(()=>editSomJob('${job.id}'),350)">
+                    <div class="atelje-card-nr">${job.ordernr || '–'}</div>
+                    <div class="atelje-card-kund">${job.kund || job.projekt || '–'}</div>
+                    ${job.projekt && job.kund ? `<div class="atelje-card-info">${job.projekt}</div>` : ''}
+                    ${job.saljare ? `<div class="atelje-card-info"><i class="bi bi-person" style="font-size:0.8rem"></i> ${job.saljare}</div>` : ''}
+                    ${job.leveransdatum ? `<div class="atelje-card-deadline" style="color:${deadlineColor}">
+                        <i class="bi bi-calendar-event"></i> ${job.leveransdatum}${overdue ? ' ⚠️ FÖRSENAD' : ''}
+                    </div>` : ''}
+                    <div class="atelje-card-actions">${prevBtn}${nextBtn}</div>
+                </div>`;
+            }
+
+            const colsHtml = SOM_COLS.map(col => {
+                const colJobs = active.filter(j => col.statuses.includes(j.status));
+                return `<div>
+                    <div class="atelje-col-header" style="background:${col.color}">
+                        ${col.icon} ${col.label}
+                        <span style="margin-left:auto;background:rgba(255,255,255,0.25);border-radius:10px;padding:0.1rem 0.6rem;font-size:0.95rem;">${colJobs.length}</span>
+                    </div>
+                    <div class="atelje-col-body">
+                        ${colJobs.length
+                            ? colJobs.sort((a,b) => (a.leveransdatum||'9') > (b.leveransdatum||'9') ? 1 : -1)
+                                     .map(ateljeCard).join('')
+                            : `<div style="text-align:center;color:#aaa;padding:1.5rem;font-size:0.9rem;">Inga ordrar</div>`
+                        }
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `<div class="atelje-columns">${colsHtml}</div>`;
+
+            // Auto-refresh varje 60 sek
+            clearTimeout(_ateljeRefreshTimer);
+            _ateljeRefreshTimer = setTimeout(() => {
+                if (currentTab === 'atelje') renderAteljeVy();
+            }, 60000);
+        }
+
+        async function ateljeSetStatus(jobId, newStatus) {
+            const jobs = await loadOrders('som');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            job.status = newStatus;
+            await saveOrder('som', job);
+            showToast(`Status → ${newStatus}`);
+            await renderAteljeVy();
+        }
 
         async function renderFaktList() {
             const container = document.getElementById('faktContainer');
@@ -3829,10 +4199,10 @@
             const somMine = somJobs.filter(j => j.saljare && matchNames.includes(j.saljare.toLowerCase()));
             const somUnassigned = somJobs.filter(j => (!j.saljare || j.saljare.trim() === '') && j.status === 'utkast');
 
-            const SOM_NEXT_MV = { utkast:'ny', ny:'sy', sy:'klar' };
-            const SOM_PREV_MV = { ny:'utkast', sy:'ny', klar:'sy' };
-            const SOM_SC = { utkast:'#9E9E9E', ny:'#00695C', sy:'#00897B', klar:'#2E7D32' };
-            const SOM_SL = { utkast:'Utkast', ny:'Ny', sy:'Syr', klar:'Klar' };
+            const SOM_NEXT_MV = { utkast:'ny', ny:'tyg anlänt', 'tyg anlänt':'syr', syr:'klar', sy:'klar' };
+            const SOM_PREV_MV = { ny:'utkast', 'tyg anlänt':'ny', syr:'tyg anlänt', sy:'tyg anlänt', klar:'syr' };
+            const SOM_SC = { utkast:'#9E9E9E', ny:'#1565C0', 'tyg anlänt':'#E65100', syr:'#6A1B9A', sy:'#6A1B9A', klar:'#2E7D32' };
+            const SOM_SL = { utkast:'Utkast', ny:'NY', 'tyg anlänt':'Tyg Anlänt', syr:'Syr', sy:'Syr', klar:'Klar' };
 
             function somCardHtml(job, showClaim = false) {
                 const nextS = SOM_NEXT_MV[job.status];
@@ -4061,7 +4431,7 @@
             if (result) {
                 showToast('Beställning sparad');
                 if (status === 'levererad') {
-                    sendNotif('📦 Tyg har anlänt', `Beställning ${b.ordernr} är levererad`);
+                    sendNotif('📦 Tyg har anlänt', `Beställning ${b.ordernr} är levererad`, ['Linda']);
                 }
                 await renderBestTable();
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('bestModal')).hide();
@@ -4531,15 +4901,11 @@
 
             // newArJobMinvyBtn / newSomJobMinvyBtn borttagna med Min vy-fliken
             
-            document.getElementById('searchArInput').addEventListener('input', async () => {
-                const jobs = await loadOrders('ar');
-                renderArList(jobs);
+            document.getElementById('searchArInput').addEventListener('input', () => {
+                loadAndRenderArJobs();
             });
-            
-            document.getElementById('filterArStatus').addEventListener('change', async () => {
-                const jobs = await loadOrders('ar');
-                renderArList(jobs);
-            });
+
+            // filterArStatus has inline onchange="loadAndRenderArJobs()" — no extra listener needed
             
             // Sömnadsorder — pre-fyll säljare + utkast för säljare, tomt för koordinator
             document.getElementById('newSomJobBtn').addEventListener('click', () => {
@@ -4552,14 +4918,12 @@
                 }
             });
             
-            document.getElementById('searchSomInput').addEventListener('input', async () => {
-                const jobs = await loadOrders('som');
-                renderSomList(jobs);
+            document.getElementById('searchSomInput').addEventListener('input', () => {
+                loadAndRenderSomJobs();
             });
-            
-            document.getElementById('filterSomStatus').addEventListener('change', async () => {
-                const jobs = await loadOrders('som');
-                renderSomList(jobs);
+
+            document.getElementById('filterSomStatus').addEventListener('change', () => {
+                loadAndRenderSomJobs();
             });
             
             // Beställningar
