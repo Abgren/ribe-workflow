@@ -277,12 +277,51 @@
             overflow: hidden;
         }
 
-        /* BEST och Dagstavla har kolumn-layout och hanterar padding internt */
+        /* BEST, Dagstavla och Fakturering har kolumn-layout och hanterar padding internt */
         .tab-panel-best.active,
-        .tab-panel-dag.active {
+        .tab-panel-dag.active,
+        .tab-panel-fakt.active {
             flex-direction: column;
             padding: 0;
             gap: 0;
+        }
+
+        /* ── FAKTURERING ── */
+        .fakt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .fakt-table th {
+            background: #1A3C5E;
+            color: #fff;
+            padding: 0.55rem 0.8rem;
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .fakt-table td {
+            padding: 0.55rem 0.8rem;
+            border-bottom: 1px solid #e8e8e8;
+            vertical-align: middle;
+        }
+        .fakt-table tr:hover td {
+            background: #f5f7fa;
+            cursor: pointer;
+        }
+        .fakt-table tr.fakt-fakturerad td {
+            opacity: 0.45;
+        }
+        .fakt-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 0.25rem 0.7rem;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
         }
         
         .status-filter {
@@ -890,6 +929,10 @@
             <button class="nav-link" id="tab-dag" role="tab" data-tab="dag">
                 <i class="bi bi-kanban"></i> Dagstavla
             </button>
+            <button class="nav-link" id="tab-fakt" role="tab" data-tab="fakt">
+                <i class="bi bi-receipt"></i> Klar för fakturering
+                <span id="faktBadge" style="display:none;background:#c62828;color:#fff;border-radius:10px;font-size:0.7rem;font-weight:700;padding:0.1rem 0.45rem;margin-left:0.3rem;"></span>
+            </button>
             <!-- Min vy-fliken borttagen — säljares utkast visas nu direkt i respektive sidebar -->
         </div>
 
@@ -1016,6 +1059,24 @@
                     </div>
                 </div>
                 <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="dagstavlaContainer"></div>
+            </div>
+
+            <!-- KLAR FÖR FAKTURERING TAB -->
+            <div class="tab-panel tab-panel-fakt">
+                <div style="padding:1rem 1.5rem 0.6rem;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-size:1.1rem;font-weight:700;color:#1A3C5E;">Klar för fakturering</div>
+                        <div style="font-size:0.8rem;color:#999;">Arbetsordrar med status Klar — ännu ej fakturerade</div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                        <label style="font-size:0.82rem;color:#555;display:flex;align-items:center;gap:0.35rem;cursor:pointer;">
+                            <input type="checkbox" id="faktVisaFakturerade" onchange="renderFaktList()">
+                            Visa fakturerade
+                        </label>
+                        <input type="text" class="form-control form-control-sm" id="faktSearchInput" placeholder="Sök ordernr/kund..." style="max-width:220px;border-radius:8px;" oninput="renderFaktList()">
+                    </div>
+                </div>
+                <div style="flex:1;overflow-y:auto;padding:1.5rem;" id="faktContainer"></div>
             </div>
 
             <!-- MIN VY TAB (borttagen — säljares utkast visas i AR/SOM sidebar) -->
@@ -1571,6 +1632,8 @@
                 await renderBestTable();
             } else if (tab === 'dag') {
                 await renderDagstavla();
+            } else if (tab === 'fakt') {
+                await renderFaktList();
             }
         }
         
@@ -1614,6 +1677,16 @@
             window._cachedSoms = soms;
             renderArList(jobs, soms);
             updateArCalendar(jobs, soms);
+
+            // Uppdatera "Klar för fakturering"-badge
+            const faktCount = jobs.filter(j => j.status === 'klar' && !j.fakturerad).length;
+            const faktBadge = document.getElementById('faktBadge');
+            if (faktBadge) {
+                faktBadge.textContent = faktCount;
+                faktBadge.style.display = faktCount > 0 ? 'inline' : 'none';
+            }
+            // Om fakturering-fliken är aktiv, rendera om listan
+            if (currentTab === 'fakt') await renderFaktList();
 
             // Daily delivery reminder for Lilly
             if (currentUser?.name === 'Lilly' && !window._deliveryReminderSent) {
@@ -3113,6 +3186,117 @@
                 section('Denna vecka', '📆', '#4527A0', dennaVecka, autoCard),
                 section('Behöver åtgärd (nya/utkast)', '🔔', '#F57C00', behoverAtgard, arCard),
             ].join('') || '<div style="padding:2rem;text-align:center;color:#999">Inget att visa just nu 🎉</div>';
+        }
+
+        // ============================================================================
+        // KLAR FÖR FAKTURERING
+        // ============================================================================
+
+        async function renderFaktList() {
+            const container = document.getElementById('faktContainer');
+            if (!container) return;
+            container.innerHTML = '<div style="color:#999;padding:1rem">Laddar...</div>';
+
+            const jobs = await loadOrders('ar');
+
+            // Alla klar-ordrar
+            const klarJobs = jobs.filter(j => j.status === 'klar');
+
+            // Uppdatera badge i nav-fliken
+            const ejFakturerade = klarJobs.filter(j => !j.fakturerad);
+            const badge = document.getElementById('faktBadge');
+            if (badge) {
+                if (ejFakturerade.length > 0) {
+                    badge.textContent = ejFakturerade.length;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+            // Sökfilter
+            const searchText = (document.getElementById('faktSearchInput')?.value || '').toLowerCase();
+            const visaFakturerade = document.getElementById('faktVisaFakturerade')?.checked;
+
+            let filtered = klarJobs;
+            if (!visaFakturerade) filtered = filtered.filter(j => !j.fakturerad);
+            if (searchText) {
+                filtered = filtered.filter(j =>
+                    (j.ordernr || '').toLowerCase().includes(searchText) ||
+                    (j.kund   || '').toLowerCase().includes(searchText) ||
+                    (j.projekt|| '').toLowerCase().includes(searchText) ||
+                    (j.saljare|| '').toLowerCase().includes(searchText)
+                );
+            }
+
+            if (!filtered.length) {
+                container.innerHTML = '<div style="padding:3rem;text-align:center;color:#999;font-size:1rem;">Inga ordrar att visa 🎉</div>';
+                return;
+            }
+
+            const rows = filtered.map(job => {
+                const isFakt = !!job.fakturerad;
+                const faktDatum = job.fakturerad_datum || '';
+                const btnStyle = `class="fakt-btn" style="background:${isFakt ? '#e8f5e9' : '#1A3C5E'};color:${isFakt ? '#2E7D32' : '#fff'};"`;
+                const btnLabel = isFakt
+                    ? `<i class="bi bi-check2-circle"></i> Fakturerad${faktDatum ? ' ' + faktDatum : ''}`
+                    : `<i class="bi bi-receipt"></i> Markera fakturerad`;
+                return `<tr class="${isFakt ? 'fakt-fakturerad' : ''}" onclick="editArJob('${job.id}')">
+                    <td style="font-weight:600;color:#1A3C5E;">${job.ordernr || '–'}</td>
+                    <td>${job.kund || '–'}</td>
+                    <td>${job.projekt || '–'}</td>
+                    <td>${job.saljare || '–'}</td>
+                    <td>${job.startdatum || '–'}</td>
+                    <td onclick="event.stopPropagation()">
+                        <button ${btnStyle} onclick="toggleFakturerad('${job.id}')">
+                            ${btnLabel}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `<table class="fakt-table">
+                <thead>
+                    <tr>
+                        <th>Ordernr</th>
+                        <th>Kund</th>
+                        <th>Projekt</th>
+                        <th>Säljare</th>
+                        <th>Startdatum</th>
+                        <th>Fakturering</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        async function toggleFakturerad(jobId) {
+            const jobs = await loadOrders('ar');
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            if (job.fakturerad) {
+                // Ångra — ta bort fakturerad-flaggan
+                delete job.fakturerad;
+                delete job.fakturerad_datum;
+                showToast('Fakturering ångrad');
+            } else {
+                job.fakturerad = true;
+                job.fakturerad_datum = new Date().toISOString().split('T')[0];
+                showToast('Markerad som fakturerad ✓');
+            }
+            await saveOrder('ar', job);
+            await renderFaktList();
+        }
+
+        // Uppdatera badge när AR-data ändras (realtime)
+        async function updateFaktBadge() {
+            const jobs = await loadOrders('ar');
+            const count = jobs.filter(j => j.status === 'klar' && !j.fakturerad).length;
+            const badge = document.getElementById('faktBadge');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'inline' : 'none';
+            }
         }
 
         async function tilldelaMig(jobId) {
