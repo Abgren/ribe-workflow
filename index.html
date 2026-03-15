@@ -1017,6 +1017,14 @@
             background-color: var(--theme-primary) !important;
             border-color: var(--theme-primary) !important;
         }
+
+        /* Arbetstid 07:30–16:00 highlightad, övrig tid nedtonad */
+        .fc-timegrid .fc-non-business {
+            background: rgba(0, 0, 0, 0.07) !important;
+        }
+        .fc-timegrid .fc-business-hours-slot {
+            background: rgba(255, 255, 255, 0) !important;
+        }
         
         .fc-button-primary:not(:disabled):active,
         .fc-button-primary:not(:disabled).fc-button-active {
@@ -2906,7 +2914,23 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                    right: 'dayGridMonth,timeGridWeek,timeGridWorkWeek,timeGridDay,listMonth'
+                },
+                views: {
+                    timeGridWorkWeek: {
+                        type: 'timeGrid',
+                        duration: { weeks: 1 },
+                        hiddenDays: [0, 6],
+                        buttonText: 'Arbetsvecka',
+                        scrollTime: '07:00:00',
+                        slotMinTime: '06:00:00',
+                        slotMaxTime: '20:00:00'
+                    }
+                },
+                businessHours: {
+                    startTime: '07:30',
+                    endTime: '16:00',
+                    daysOfWeek: [1, 2, 3, 4, 5]
                 },
                 locale: 'sv',
                 events: [],
@@ -3585,7 +3609,18 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                    right: 'dayGridMonth,timeGridWeek,timeGridWorkWeek,timeGridDay,listMonth'
+                },
+                views: {
+                    timeGridWorkWeek: {
+                        type: 'timeGrid',
+                        duration: { weeks: 1 },
+                        hiddenDays: [0, 6],
+                        buttonText: 'Arbetsvecka',
+                        scrollTime: '07:00:00',
+                        slotMinTime: '06:00:00',
+                        slotMaxTime: '20:00:00'
+                    }
                 },
                 locale: 'sv',
                 editable: true,
