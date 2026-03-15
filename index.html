@@ -2579,8 +2579,8 @@
             const formHtml = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
                     <div>
-                        <label class="form-label fw-semibold">Fortnox Ordernr</label>
-                        <input type="text" class="form-control" id="ar_ordernr" value="${jobData.ordernr || thisYear}" placeholder="${thisYear}">
+                        <label class="form-label fw-semibold">Ordernr</label>
+                        <input type="text" class="form-control" id="ar_ordernr" value="${jobData.ordernr || ''}" placeholder="Ordernr">
                     </div>
                     <div>
                         <label class="form-label fw-semibold">Kund</label>
@@ -3188,7 +3188,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-section">
                         <label class="form-label fw-semibold">Ordernummer</label>
-                        <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" placeholder="Fortnox ordernr">
+                        <input type="text" class="form-control som-field" id="som_ordernr" value="${jobData.ordernr || ''}" placeholder="Ordernr">
                     </div>
                     <div class="form-section">
                         <label class="form-label fw-semibold">Kundnamn</label>
