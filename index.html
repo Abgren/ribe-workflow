@@ -2540,8 +2540,8 @@
         function showArJobModal(job = null) {
             const isNew = !job || !job.id;   // prefill-objekt utan id räknas som ny
             const thisYear = new Date().getFullYear();
-            const jobData = job ? { ordernr: String(thisYear), status: 'utkast', startdatum: formatDate(new Date()), ...job } : {
-                ordernr: String(thisYear),
+            const jobData = job ? { status: 'utkast', startdatum: formatDate(new Date()), ...job } : {
+                ordernr: '',
                 status: 'utkast',
                 startdatum: formatDate(new Date())
             };
@@ -3167,8 +3167,8 @@
         
         async function showSomJobModal(job = null) {
             const isNew = !job || !job.id;   // prefill-objekt utan id räknas som ny
-            const jobData = job ? { ordernr: generateOrderNumber('som'), status: 'utkast', leveransdatum: formatDate(new Date()), ...job } : {
-                ordernr: generateOrderNumber('som'),
+            const jobData = job ? { status: 'utkast', leveransdatum: formatDate(new Date()), ...job } : {
+                ordernr: '',
                 status: 'utkast',
                 leveransdatum: formatDate(new Date())
             };
