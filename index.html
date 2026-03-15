@@ -3207,10 +3207,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
                     <div class="form-section">
                         <label class="form-label">Leveransdatum</label>
-                        <div style="display:flex;gap:0.5rem;">
-                            <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
-                            <input type="time" class="form-control som-field" id="som_leveranstid" value="${jobData.leveranstid || '08:00'}" style="width:110px;">
-                        </div>
+                        <input type="date" class="form-control som-field" id="som_leveransdatum" value="${jobData.leveransdatum || ''}">
                     </div>
                     <div class="form-section">
                         <label class="form-label fw-semibold" style="color:#D4A96A;"><i class="bi bi-link-45deg"></i> Koppla till Arbetsorder</label>
@@ -3225,11 +3222,17 @@
                 <div class="form-section">
                     <h6 class="form-section-title" style="color: var(--theme-primary);">Status</h6>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button type="button" class="status-pill ${jobData.status === 'utkast' ? 'active' : ''}" data-som-status="utkast" style="background: ${jobData.status === 'utkast' ? 'var(--status-utkast)' : '#eee'}; color: ${jobData.status === 'utkast' ? 'white' : '#333'};">Utkast</button>
-                        <button type="button" class="status-pill ${jobData.status === 'ny' ? 'active' : ''}" data-som-status="ny" style="background: ${jobData.status === 'ny' ? 'var(--status-ny-som)' : '#eee'}; color: white;">NY</button>
-                        <button type="button" class="status-pill ${jobData.status === 'tyg anlänt' ? 'active' : ''}" data-som-status="tyg anlänt" style="background: ${jobData.status === 'tyg anlänt' ? 'var(--status-tyg-anlänt)' : '#eee'}; color: white;">🧵 Tyg Anlänt</button>
-                        <button type="button" class="status-pill ${['sy','syr'].includes(jobData.status) ? 'active' : ''}" data-som-status="syr" style="background: ${['sy','syr'].includes(jobData.status) ? 'var(--status-syr)' : '#eee'}; color: white;">✂️ Syr</button>
-                        <button type="button" class="status-pill ${jobData.status === 'klar' ? 'active' : ''}" data-som-status="klar" style="background: ${jobData.status === 'klar' ? 'var(--status-klar-som)' : '#eee'}; color: white;">✅ Klar</button>
+                        ${[
+                            { s:'utkast',      label:'Utkast',         color:'#757575', bg:'#F5F5F5',  active: jobData.status === 'utkast' },
+                            { s:'ny',          label:'NY',             color:'#7B1FA2', bg:'#F3E5F5',  active: jobData.status === 'ny' },
+                            { s:'tyg anlänt',  label:'🧵 Tyg Anlänt', color:'#E65100', bg:'#FBE9E7',  active: jobData.status === 'tyg anlänt' },
+                            { s:'syr',         label:'✂️ Syr',         color:'#6A1B9A', bg:'#EDE7F6',  active: ['sy','syr'].includes(jobData.status) },
+                            { s:'klar',        label:'✅ Klar',        color:'#2E7D32', bg:'#E8F5E9',  active: jobData.status === 'klar' },
+                        ].map(({s,label,color,bg,active}) => `
+                            <button type="button" class="status-pill ${active?'active':''}" data-som-status="${s}"
+                                style="background:${active?color:bg};color:${active?'white':color};border:2px solid ${color};padding:0.4rem 1rem;border-radius:20px;font-size:0.85rem;cursor:pointer;font-weight:${active?'700':'500'};">
+                                ${label}
+                            </button>`).join('')}
                     </div>
                 </div>
                 
