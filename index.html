@@ -3219,9 +3219,6 @@
                 </div>
 
                 <div class="form-section">
-                    <h6 class="form-section-title" style="color: var(--color-som-primary, #5e35b1); margin-bottom: 0.5rem;">
-                        <i class="bi bi-scissors"></i> Sömnadsmoduler
-                    </h6>
                     <div id="som-moduler-container"></div>
                 </div>
 
@@ -3330,8 +3327,11 @@
             window._mattlista = JSON.parse(JSON.stringify(jobData.mattlista || []));
             updateMattSomFormBadge();
 
-            // Init sömnadsmoduler
+            // Init sömnadsmoduler — starta alltid med minst en modul öppen
             window._somModuler = JSON.parse(JSON.stringify(jobData.moduler || []));
+            if (window._somModuler.length === 0) {
+                window._somModuler.push({ tyg:'', leverantor:'', rader:[_emptyRad()] });
+            }
             renderSomModuler();
 
             // Setup status pill listeners
@@ -3379,7 +3379,7 @@
                     <table class="table table-sm table-bordered mb-0" style="min-width:660px;font-size:0.78rem;">
                         <thead style="background:#f4f8f4;">
                             <tr>
-                                ${_somCols.map((c,ci)=>`<th style="white-space:nowrap;${_somChk.has(_somFields[ci])?'width:50px;text-align:center':''}">${c}</th>`).join('')}
+                                ${_somCols.map((c,ci)=>`<th style="white-space:nowrap;text-align:center;${_somChk.has(_somFields[ci])?'width:50px;':''}">${c}</th>`).join('')}
                                 <th style="width:28px;"></th>
                             </tr>
                         </thead>
@@ -3388,7 +3388,9 @@
                             <tr>
                                 ${_somFields.map(f => _somChk.has(f)
                                     ? `<td style="text-align:center;vertical-align:middle;"><input type="checkbox" ${r[f]?'checked':''} onchange="window._somModuler[${mi}].rader[${ri}].${f}=this.checked" style="width:16px;height:16px;cursor:pointer;"></td>`
-                                    : `<td style="padding:2px 4px;"><input type="text" class="form-control form-control-sm" value="${(r[f]||'').toString().replace(/"/g,'&quot;')}" oninput="window._somModuler[${mi}].rader[${ri}].${f}=this.value" style="min-width:${f==='markning'?90:f==='ovrigt'?110:50}px;"></td>`
+                                    : (f==='fb'||f==='fh')
+                                        ? `<td style="padding:2px 4px;"><div style="display:flex;align-items:center;gap:2px;"><input type="number" class="form-control form-control-sm" value="${(r[f]||'').toString().replace(/"/g,'&quot;')}" oninput="window._somModuler[${mi}].rader[${ri}].${f}=this.value" style="min-width:55px;" min="0" step="0.5"><span style="font-size:0.75rem;color:#666;white-space:nowrap;flex-shrink:0;">cm</span></div></td>`
+                                        : `<td style="padding:2px 4px;"><input type="text" class="form-control form-control-sm" value="${(r[f]||'').toString().replace(/"/g,'&quot;')}" oninput="window._somModuler[${mi}].rader[${ri}].${f}=this.value" style="min-width:${f==='markning'?90:f==='ovrigt'?110:50}px;"></td>`
                                 ).join('')}
                                 <td style="text-align:center;vertical-align:middle;">
                                     <button class="btn btn-sm btn-link text-danger p-0" onclick="removeSomModulRad(${mi},${ri})" title="Ta bort rad">×</button>
